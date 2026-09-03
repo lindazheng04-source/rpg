@@ -3,115 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>异世界地下城挂机录 - RPG v8.1</title>
-    <!-- [样式区] 负责界面的色彩、高亮、网格布局与响应式样式 -->
+    <title>放置 RPG</title>
     <style>
         :root {
-            --bg-color: #121319;
-            --card-bg: #1c1d26;
-            --primary: #9d8ec7;
-            --accent: #ff79c6;
-            --text: #e0e0e0;
-            --subtext: #9090a0;
-            --border: #2e303e;
-            --hp-color: #ff5555;
-            --exp-color: #50fa7b;
-            --gold-color: #f1fa8c;
-            --unknown: #44475a;
-            --crit-color: #ffb86c;
-            --epic-color: #bd93f9;
-            --weather-color: #8be9fd;
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text-color: #e0e0e0;
+            --subtext: #aaa;
+            --accent: #ff9800;
+            --border: #444;
+            --hp-color: #e53935;
+            --exp-color: #4caf50;
         }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', "Microsoft YaHei", sans-serif; }
-        body { background: var(--bg-color); color: var(--text); padding: 15px; display: flex; justify-content: center; }
-        .game-container { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 12px; }
-
-        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-        .title { color: var(--accent); font-size: 1.05rem; font-weight: bold; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 0.85rem; margin-bottom: 8px; }
-        .bar-container { background: #000; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 3px; }
-        .bar-fill { height: 100%; transition: width 0.3s ease; }
-
-        .battle-zone { text-align: center; padding: 10px; position: relative; }
-        .weather-tag { font-size: 0.75rem; color: var(--weather-color); margin-bottom: 4px; font-weight: bold; }
-        .monster-name { font-size: 1.2rem; color: var(--crit-color); font-weight: bold; margin-bottom: 4px; }
-        .monster-hp { font-size: 0.8rem; color: var(--subtext); }
-
-        .btn { width: 100%; padding: 10px; border: none; border-radius: 8px; background: var(--primary); color: #fff; font-size: 0.95rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn:hover { opacity: 0.9; }
-        .btn.active { background: var(--hp-color); }
-        .btn-sm { width: auto; padding: 4px 8px; font-size: 0.75rem; border-radius: 6px; border: none; background: var(--primary); color: #fff; cursor: pointer; }
-        .btn-off { background: #44475a !important; color: #aaa !important; }
-        .btn-group { display: flex; gap: 4px; }
-
-        .equip-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; font-size: 0.8rem; }
-        .equip-slot { background: #161720; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 10px;
+            font-size: 14px;
+        }
+        .container { max-width: 600px; margin: 0 auto; }
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+        .title { font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .equip-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center; }
+        .equip-slot { background: #222; padding: 6px; border-radius: 4px; border: 1px solid #333; }
         .equip-slot .label { font-size: 0.7rem; color: var(--subtext); }
-        .equip-slot .val { color: var(--primary); font-weight: bold; margin-top: 2px; font-size: 0.8rem; }
-
-        .tab-menu { display: flex; gap: 4px; margin-top: 5px; flex-wrap: wrap; }
-        .tab-btn { flex: 1; min-width: 40px; padding: 6px 2px; background: #181922; border: 1px solid var(--border); color: var(--subtext); border-radius: 6px; cursor: pointer; font-size: 0.75rem; text-align: center; }
-        .tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); font-weight: bold; }
+        .equip-slot .val { font-weight: bold; font-size: 0.85rem; }
+        
+        .bar-container { background: #444; height: 12px; border-radius: 6px; overflow: hidden; position: relative; margin: 4px 0; }
+        .bar-fill { height: 100%; transition: width 0.3s; }
+        .bar-text { position: absolute; width: 100%; text-align: center; font-size: 0.65rem; line-height: 12px; top: 0; color: #fff; text-shadow: 0 0 2px #000; }
+        
+        #log-box { height: 120px; overflow-y: auto; background: #151515; border-radius: 4px; padding: 6px; font-family: monospace; font-size: 0.75rem; }
+        .log-item { margin-bottom: 2px; }
+        
+        .tabs { display: flex; gap: 4px; margin-bottom: 8px; }
+        .tab-btn { flex: 1; padding: 6px; background: #333; border: none; color: #fff; border-radius: 4px; cursor: pointer; }
+        .tab-btn.active { background: var(--accent); color: #000; font-weight: bold; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-
-        .item-list { display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; max-height: 220px; overflow-y: auto; padding-right: 4px; }
-        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: #161720; border-radius: 6px; border: 1px solid #282a36; }
-        .item-desc { font-size: 0.75rem; color: var(--subtext); }
-
-        .codex-section { margin-bottom: 12px; }
-        .codex-title { font-size: 0.8rem; color: var(--accent); margin-bottom: 6px; font-weight: bold; border-bottom: 1px solid #282a36; padding-bottom: 2px; }
+        
+        button { background: #444; color: #fff; border: 1px solid #555; padding: 6px 12px; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 4px; }
+        button:hover { background: #555; }
+        button.active { background: #c62828; }
+        .btn-sm { width: auto; padding: 2px 8px; font-size: 0.75rem; }
+        .btn-off { background: #222; color: #666; border-color: #333; }
+        
+        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px dashed #333; }
+        .item-desc { font-size: 0.7rem; color: var(--subtext); }
+        .btn-group { display: flex; gap: 4px; }
+        
         .codex-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
-        .codex-card { background: #161720; padding: 6px 8px; border-radius: 6px; font-size: 0.75rem; border: 1px solid #282a36; }
-        .codex-card.locked { color: var(--unknown); border-color: #1f202c; }
-        .codex-card.locked .name { color: var(--unknown); }
-        .codex-card .name { font-weight: bold; color: var(--text); }
-
-        .region-select { width: 100%; padding: 8px; background: #161720; color: var(--text); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem; }
-
-        .log-box { height: 130px; overflow-y: auto; font-size: 0.8rem; display: flex; flex-direction: column-reverse; gap: 4px; }
-        .log-item { color: var(--subtext); border-bottom: 1px solid #222430; padding-bottom: 2px; }
-        .log-item .highlight { color: var(--accent); }
-        .log-item .gain { color: var(--exp-color); }
-        .log-item .crit { color: var(--crit-color); font-weight: bold; }
-        .log-item .rare { color: var(--epic-color); font-weight: bold; }
-        .log-item .death { color: var(--hp-color); font-weight: bold; }
-        .log-item .weather { color: var(--weather-color); }
+        .codex-card { background: #222; padding: 6px; border-radius: 4px; font-size: 0.75rem; border: 1px solid #333; }
+        .codex-card.locked { opacity: 0.4; }
+        
+        .highlight { color: #ffca28; }
+        .crit { color: #ff5722; font-weight: bold; }
+        .death { color: #ef5350; font-weight: bold; }
+        .gain { color: #66bb6a; }
+        .weather { color: #29b6f6; }
     </style>
 </head>
 <body>
 
-<!-- [视图区] 渲染前端用户界面 -->
-<div class="game-container">
-    <!-- 玩家基本属性卡片 -->
+<div class="container">
+    <!-- 玩家基本信息 -->
     <div class="card">
-        <div class="title">
-            <span>⚔️ 冒险者状态</span>
-            <span id="player-level" style="color: var(--primary);">Lv.1</span>
+        <div style="display:flex; justify-content:space-between;">
+            <span id="player-level" style="font-weight:bold; color:var(--accent);">Lv.1</span>
+            <span>💰 <span id="player-gold">0</span> | SP: <span id="player-sp">0</span></span>
         </div>
-        <div class="stats-grid">
-            <div>总攻击: <span id="player-atk">8</span> <span style="font-size:0.7rem; color:var(--crit-color)" id="crit-chance">(暴击10%)</span></div>
-            <div>总防御: <span id="player-def">2</span></div>
-            <div>金币: <span id="player-gold" style="color:var(--gold-color)">0</span> 🪙</div>
-            <div>技能点(SP): <span id="player-sp" style="color:var(--weather-color)">0</span> ✨</div>
-            <div>背包容量: <span id="bag-capacity">0/15</span> 🎒</div>
-            <div>死亡次数: <span id="player-deaths" style="color:var(--hp-color)">0</span> ☠️</div>
+        <div class="grid-2" style="margin-top:6px; font-size:0.8rem;">
+            <div>⚔️ 攻击: <span id="player-atk">0</span> <span id="crit-chance" style="font-size:0.65rem; color:var(--subtext);">(暴击10%)</span></div>
+            <div>🛡️ 防御: <span id="player-def">0</span></div>
+            <div>☠️ 阵亡次数: <span id="player-deaths">0</span></div>
+            <div>🎒 背包: <span id="bag-capacity">0/15</span></div>
         </div>
-        <div>
-            <div style="font-size: 0.75rem; display: flex; justify-content: space-between;">
-                <span>生命值</span>
-                <span id="hp-text">100/100</span>
+        <div style="margin-top:6px;">
+            <div class="bar-container">
+                <div id="hp-bar" class="bar-fill" style="background:var(--hp-color); width:100%;"></div>
+                <div id="hp-text" class="bar-text">100/100</div>
             </div>
-            <div class="bar-container"><div id="hp-bar" class="bar-fill" style="background: var(--hp-color); width: 100%;"></div></div>
-        </div>
-        <div style="margin-top: 6px;">
-            <div style="font-size: 0.75rem; display: flex; justify-content: space-between;">
-                <span>经验值</span>
-                <span id="exp-text">0/50</span>
+            <div class="bar-container">
+                <div id="exp-bar" class="bar-fill" style="background:var(--exp-color); width:0%;"></div>
+                <div id="exp-text" class="bar-text">0/50</div>
             </div>
-            <div class="bar-container"><div id="exp-bar" class="bar-fill" style="background: var(--exp-color); width: 0%;"></div></div>
         </div>
     </div>
 
@@ -137,135 +121,148 @@
         </div>
     </div>
 
-    <!-- 战斗监控区域 -->
-    <div class="card battle-zone">
-        <select class="region-select" id="region-select" onchange="changeRegion()"></select>
-        <div class="weather-tag" id="weather-tag">☀️ 天气：晴空 (无特殊效果)</div>
-        <div class="monster-name" id="monster-name">寻找魔物中...</div>
-        <div class="monster-hp" id="monster-hp-text">HP: -/-</div>
-        <div class="bar-container" style="margin-top: 6px;">
-            <div id="monster-hp-bar" class="bar-fill" style="background: var(--accent); width: 0%;"></div>
-        </div>
-    </div>
-
-    <!-- 主控操作按钮 -->
-    <div style="display:flex; gap:8px;">
-        <button id="toggle-btn" class="btn" onclick="toggleAutoBattle()">开始挂机探索</button>
-        <button class="btn-sm" style="background:#44475a; padding:0 10px;" onclick="resetSave()">重置进度</button>
-    </div>
-
-    <!-- 多标签页卡片 (背包、技能、商店、炼金、魔宠、图鉴) -->
+    <!-- 当前战斗与状态信息 -->
     <div class="card">
-        <div class="tab-menu">
-            <div class="tab-btn active" onclick="switchTab('bag')">🎒 背包</div>
-            <div class="tab-btn" onclick="switchTab('skill')">⚡ 技能</div>
-            <div class="tab-btn" onclick="switchTab('shop')">🏪 商店</div>
-            <div class="tab-btn" onclick="switchTab('craft')">🧪 炼金</div>
-            <div class="tab-btn" onclick="switchTab('pet')">🐾 魔宠</div>
-            <div class="tab-btn" onclick="switchTab('codex')">📖 图鉴</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <select id="region-select" onchange="changeRegion()" style="background:#222; color:#fff; border:1px solid #444; padding:2px 6px; border-radius:4px; font-size:0.8rem;"></select>
+            <span id="weather-tag" style="font-size:0.75rem; color:var(--subtext);">晴空</span>
+        </div>
+        
+        <div style="background:#222; padding:8px; border-radius:4px; margin-bottom:8px;">
+            <div style="display:flex; justify-content:space-between; font-weight:bold;">
+                <span id="monster-name">寻找魔物中...</span>
+                <span id="monster-hp-text" style="font-size:0.8rem; color:var(--hp-color);">HP: 0/0</span>
+            </div>
+            <div class="bar-container" style="margin-top:4px;">
+                <div id="monster-hp-bar" class="bar-fill" style="background:var(--hp-color); width:0%;"></div>
+            </div>
         </div>
 
-        <div style="margin-top: 10px;">
-            <div id="tab-bag" class="tab-content active">
-                <div class="item-list" id="bag-list"></div>
-            </div>
+        <button id="toggle-btn" onclick="toggleAutoBattle()">开始挂机探索</button>
+    </div>
 
-            <div id="tab-skill" class="tab-content">
-                <div class="item-list" id="skill-list"></div>
-            </div>
+    <!-- 战报日志 -->
+    <div class="card">
+        <div class="title" style="font-size:0.8rem;">📜 冒险战报</div>
+        <div id="log-box"></div>
+    </div>
 
-            <div id="tab-shop" class="tab-content">
-                <div class="item-list" id="shop-list">
-                    <div class="item-row">
-                        <div>小型生命药水 <span class="item-desc">(+50 HP)</span></div>
-                        <div class="btn-group">
-                            <button class="btn-sm" onclick="buyPotion('small', 1, 20)">1瓶(20金)</button>
-                            <button class="btn-sm" onclick="buyPotion('small', 10, 200)">10瓶(200金)</button>
-                        </div>
-                    </div>
-                    <div class="item-row">
-                        <div>大特效药水 <span class="item-desc">(+180 HP)</span></div>
-                        <div class="btn-group">
-                            <button class="btn-sm" onclick="buyPotion('large', 1, 80)">1瓶(80金)</button>
-                            <button class="btn-sm" onclick="buyPotion('large', 10, 800)">10瓶(800金)</button>
-                        </div>
-                    </div>
-                    <div class="item-row">
-                        <div>🎒 中型冒险背包 <span class="item-desc">(容量上限 +10)</span></div>
-                        <button class="btn-sm" id="btn-bag-1" onclick="buyBagUpgrade(1, 300, 10)">300 金币</button>
-                    </div>
-                    <div class="item-row">
-                        <div>🎒 大型冒险背包 <span class="item-desc">(容量上限 +25)</span></div>
-                        <button class="btn-sm" id="btn-bag-2" onclick="buyBagUpgrade(2, 1200, 25)">1200 金币</button>
-                    </div>
-                    <div class="item-row">
-                        <div>⚡ 狂暴药剂 <span class="item-desc">(永久 +5% 暴击率)</span></div>
-                        <button class="btn-sm" onclick="buyElixir('crit', 500)">500 金币</button>
-                    </div>
-                </div>
-            </div>
+    <!-- 底部 Tab 选项卡导航 -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('bag')">🎒 背包</button>
+        <button class="tab-btn" onclick="switchTab('craft')">🧪 炼金</button>
+        <button class="tab-btn" onclick="switchTab('skills')">⚡ 技能</button>
+        <button class="tab-btn" onclick="switchTab('shop')">🛒 商店</button>
+        <button class="tab-btn" onclick="switchTab('codex')">📖 图鉴</button>
+    </div>
 
-            <div id="tab-craft" class="tab-content">
-                <div class="item-list" id="craft-list"></div>
-            </div>
+    <!-- TAB 1: 背包 -->
+    <div id="tab-bag" class="tab-content card active">
+        <div id="bag-list"></div>
+    </div>
 
-            <div id="tab-pet" class="tab-content">
-                <div class="item-list">
-                    <div class="item-row">
-                        <div>🐱 史莱姆幼体 <span class="item-desc">(每轮恢复 5 HP)</span></div>
-                        <button class="btn-sm" onclick="adoptPet('史莱姆幼体', 'heal', 5, 200)">200 金币</button>
-                    </div>
-                    <div class="item-row">
-                        <div>🦅 疾风之鹰 <span class="item-desc">(+15% 暴击率)</span></div>
-                        <button class="btn-sm" onclick="adoptPet('疾风之鹰', 'crit', 15, 600)">600 金币</button>
-                    </div>
-                    <div class="item-row">
-                        <div>🐉 熔岩幼龙 <span class="item-desc">(+25 基础攻击)</span></div>
-                        <button class="btn-sm" onclick="adoptPet('熔岩幼龙', 'atk', 25, 2000)">2000 金币</button>
-                    </div>
-                </div>
-            </div>
+    <!-- TAB 2: 炼金 -->
+    <div id="tab-craft" class="tab-content card">
+        <div id="craft-list"></div>
+    </div>
 
-            <div id="tab-codex" class="tab-content">
-                <div class="item-list" style="max-height: 220px;">
-                    <div class="codex-section">
-                        <div class="codex-title">👾 怪物图鉴</div>
-                        <div class="codex-grid" id="codex-monsters"></div>
-                    </div>
-                    <div class="codex-section">
-                        <div class="codex-title">🗡️ 装备图鉴</div>
-                        <div class="codex-grid" id="codex-equips"></div>
-                    </div>
-                    <div class="codex-section">
-                        <div class="codex-title">🪨 素材图鉴</div>
-                        <div class="codex-grid" id="codex-materials"></div>
-                    </div>
-                    <div class="codex-section">
-                        <div class="codex-title">🧪 炼金配方图鉴</div>
-                        <div class="codex-grid" id="codex-crafts"></div>
-                    </div>
-                    <div class="codex-section">
-                        <div class="codex-title">🎒 背包历史收录</div>
-                        <div class="codex-grid" id="codex-bag-history"></div>
-                    </div>
-                </div>
+    <!-- TAB 3: 技能 -->
+    <div id="tab-skills" class="tab-content card">
+        <div id="skill-list"></div>
+    </div>
+
+    <!-- TAB 4: 商店 -->
+    <div id="tab-shop" class="tab-content card">
+        <div class="item-row">
+            <div>
+                <div>🧪 小型生命药水</div>
+                <div class="item-desc">恢复 50 点 HP</div>
             </div>
+            <button class="btn-sm" onclick="buyPotion('small', 1, 15)">购买 (15💰)</button>
+        </div>
+        <div class="item-row">
+            <div>
+                <div>🧪 大特效药水</div>
+                <div class="item-desc">恢复 180 点 HP</div>
+            </div>
+            <button class="btn-sm" onclick="buyPotion('large', 1, 50)">购买 (50💰)</button>
+        </div>
+        <div class="item-row">
+            <div>
+                <div>🎒 扩容背包 (+5格)</div>
+                <div class="item-desc">扩大物品储存上限</div>
+            </div>
+            <button id="btn-bag-1" class="btn-sm" onclick="buyBagUpgrade(1, 150, 5)">购买 (150💰)</button>
+        </div>
+        <div class="item-row">
+            <div>
+                <div>🎒 高级旅行背包 (+10格)</div>
+                <div class="item-desc">大幅拓展储存上限</div>
+            </div>
+            <button id="btn-bag-2" class="btn-sm" onclick="buyBagUpgrade(2, 500, 10)">购买 (500💰)</button>
+        </div>
+        <div class="item-row">
+            <div>
+                <div>⚡ 狂暴药剂</div>
+                <div class="item-desc">永久提升 5% 暴击率</div>
+            </div>
+            <button class="btn-sm" onclick="buyElixir('crit', 300)">购买 (300💰)</button>
+        </div>
+        <div class="item-row">
+            <div>
+                <div>🐾 契约：精灵史莱姆</div>
+                <div class="item-desc">每轮回复 8 点 HP (战败会阵亡)</div>
+            </div>
+            <button class="btn-sm" onclick="adoptPet('精灵史莱姆', 'heal', 8, 200)">签约 (200💰)</button>
+        </div>
+        <div class="item-row">
+            <div>
+                <div>🐾 契约：寻宝狐狸</div>
+                <div class="item-desc">提升 8% 暴击率 (战败会阵亡)</div>
+            </div>
+            <button class="btn-sm" onclick="adoptPet('寻宝狐狸', 'crit', 8, 350)">签约 (350💰)</button>
+        </div>
+        <div class="item-row">
+            <div>
+                <div>🐾 契约：小幼龙</div>
+                <div class="item-desc">增加 15 点基础攻击力 (战败会阵亡)</div>
+            </div>
+            <button class="btn-sm" onclick="adoptPet('小幼龙', 'atk', 15, 600)">签约 (600💰)</button>
         </div>
     </div>
 
-    <!-- 动态战斗日志框 -->
-    <div class="card">
-        <div class="title">📜 冒险日志</div>
-        <div class="log-box" id="log-box">
-            <div class="log-item">准备就绪，开启冒险吧...</div>
-        </div>
+    <!-- TAB 5: 图鉴 -->
+    <div id="tab-codex" class="tab-content card">
+        <div class="title" style="font-size:0.8rem;">👾 击杀魔物图鉴</div>
+        <div id="codex-monsters" class="codex-grid" style="margin-bottom:10px;"></div>
+        
+        <div class="title" style="font-size:0.8rem;">🛡️ 装备图鉴</div>
+        <div id="codex-equips" class="codex-grid" style="margin-bottom:10px;"></div>
+
+        <div class="title" style="font-size:0.8rem;">💎 材料图鉴</div>
+        <div id="codex-materials" class="codex-grid" style="margin-bottom:10px;"></div>
+
+        <div class="title" style="font-size:0.8rem;">🧪 炼金产物图鉴</div>
+        <div id="codex-crafts" class="codex-grid" style="margin-bottom:10px;"></div>
+
+        <div class="title" style="font-size:0.8rem;">🎒 道具使用历史</div>
+        <div id="codex-bag-history" class="codex-grid"></div>
+
+        <button onclick="resetSave()" style="margin-top:15px; background:#b71c1c;">⚠️ 清空并重置游戏数据</button>
     </div>
 </div>
 
-<!-- [逻辑区] JavaScript 核心算法与数值管理 -->
 <script>
     // -------------------------------------------------------------
-    // 1. 数据模型定义（包含玩家属性、默认初始状态与全局数据库）
+    // 0. 通用工具函数
+    // -------------------------------------------------------------
+    // 生成 [min, max] 之间的随机整数
+    function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // -------------------------------------------------------------
+    // 1. 数据模型定义
     // -------------------------------------------------------------
     const defaultPlayer = {
         level: 1, hp: 100, maxHp: 100, atk: 8, def: 2, exp: 0, maxExp: 50, gold: 0, kills: 0, deaths: 0,
@@ -278,13 +275,7 @@
     };
     let player = JSON.parse(JSON.stringify(defaultPlayer));
 
-    // 默认技能配置
-    const defaultSkills = {
-        heavy_strike: 0, // 重击 (概率造成200%伤害)
-        toughness: 0,    // 坚韧 (+15% 生命上限)
-        vampire: 0,      // 汲血 (攻击吸血10%)
-        lucky_star: 0    // 幸运 (+8% 暴击率)
-    };
+    const defaultSkills = { heavy_strike: 0, toughness: 0, vampire: 0, lucky_star: 0 };
     let skills = JSON.parse(JSON.stringify(defaultSkills));
 
     const skillDefs = [
@@ -294,7 +285,6 @@
         { id: "lucky_star", name: "🌟 幸运星", desc: "暴击率增加 8%，且极度提升材料掉率" }
     ];
 
-    // 默认材料背包配置
     const defaultInventory = {
         slime_gel: 0, goblin_cloth: 0, iron_ore: 0, bone: 0,
         volcano_stone: 0, dragon_scale: 0, refined_iron: 0
@@ -307,7 +297,6 @@
         refined_iron: "🧱 精炼铁块"
     };
 
-    // 天气机制定义
     const weatherList = [
         { id: "clear", name: "☀️ 晴空", desc: "标准战斗环境，无额外效果。" },
         { id: "rain", name: "🌧️ 暴风雨", desc: "视线变差，双方伤害小幅浮动下降 20%。" },
@@ -326,7 +315,7 @@
         bagHistory: new Set(["小型生命药水"])
     };
 
-    // 区域与怪物数据表
+    // 区域与怪物基准数据表
     const regions = [
         {
             name: "【危险度:低】静谧郊野",
@@ -362,11 +351,10 @@
         }
     ];
 
-    // 炼金合成配方表
+    // 炼金合成配方表 (已移除了需精炼铁块制作的装备)
     const craftRecipes = [
         { id: "potion_large", name: "🧪 大特效药水 x2", materials: { slime_gel: 3 }, type: "item", target: "potionsLarge", amount: 2 },
         { id: "refined_iron", name: "🧱 精炼铁块", materials: { iron_ore: 3 }, type: "mat", target: "refined_iron", amount: 1 },
-        { id: "iron_shield", name: "🛡️ 精钢重盾 (防御+15)", materials: { iron_ore: 5 }, type: "armor", stat: 15 },
         { id: "equip_sword", name: "⚔️ 烈焰灭世剑 (攻击+65)", materials: { refined_iron: 3, volcano_stone: 3 }, type: "weapon", stat: 65 },
         { id: "equip_armor", name: "🛡️ 熔岩龙鳞铠 (防御+50)", materials: { dragon_scale: 3, refined_iron: 2 }, type: "armor", stat: 50 }
     ];
@@ -377,7 +365,7 @@
     let attackTurnCount = 0;
 
     // -------------------------------------------------------------
-    // 2. 数据持久化逻辑
+    // 2. 数据持久化
     // -------------------------------------------------------------
     function saveGame() {
         let saveData = {
@@ -390,11 +378,11 @@
                 bagHistory: Array.from(codexData.bagHistory)
             }
         };
-        localStorage.setItem("rpg_save_v8", JSON.stringify(saveData));
+        localStorage.setItem("rpg_save_v9", JSON.stringify(saveData));
     }
 
     function loadGame() {
-        let data = localStorage.getItem("rpg_save_v8");
+        let data = localStorage.getItem("rpg_save_v9");
         if (data) {
             try {
                 let parsed = JSON.parse(data);
@@ -412,20 +400,20 @@
                 }
                 addLog(`💾 自动加载本地进度成功！`);
             } catch (e) {
-                console.error("存档解析失败，恢复初始设置", e);
+                console.error("存档解析失败", e);
             }
         }
     }
 
     function resetSave() {
-        if (confirm("确定重置进度吗？所有属性、技能与进度将被重置！")) {
-            localStorage.removeItem("rpg_save_v8");
+        if (confirm("确定重置进度吗？所有属性与进度将被重置！")) {
+            localStorage.removeItem("rpg_save_v9");
             location.reload();
         }
     }
 
     // -------------------------------------------------------------
-    // 3. 战斗与遭遇算法 (降低 BOSS 遇敌率至 5%)
+    // 3. 战斗与动态怪物生成算法 (包含区间数值浮动)
     // -------------------------------------------------------------
     function spawnMonster() {
         let currRegIndex = player.currentRegion;
@@ -446,12 +434,34 @@
         } else {
             base = normalMonsters[Math.floor(Math.random() * normalMonsters.length)];
         }
-        
+
+        // --- 数值区间浮动逻辑 ---
+        // HP 与 攻击力在 ±15% 间随机浮动
+        let hpFluct = getRandomInt(Math.floor(base.hp * 0.85), Math.ceil(base.hp * 1.15));
+        let atkFluct = getRandomInt(Math.floor(base.atk * 0.85), Math.ceil(base.atk * 1.15));
+        // 经验(±10%)与金币(±20%)浮动
+        let expFluct = getRandomInt(Math.floor(base.exp * 0.9), Math.ceil(base.exp * 1.1));
+        let goldFluct = getRandomInt(Math.floor(base.gold * 0.8), Math.ceil(base.gold * 1.2));
+
+        // 掉落物品类型动态浮动（80% 掉落专属材料，20% 掉落杂物/通用材料）
+        let dropItem = base.drop;
+        if (base.drop && Math.random() < 0.2) {
+            let randomMatPool = ["slime_gel", "goblin_cloth", "iron_ore"];
+            dropItem = randomMatPool[Math.floor(Math.random() * randomMatPool.length)];
+        }
+
         currentMonster = {
-            name: base.name, maxHp: base.hp, hp: base.hp, atk: base.atk,
-            exp: base.exp, gold: base.gold, drop: base.drop, isBoss: base.isBoss || false
+            name: base.name,
+            maxHp: hpFluct,
+            hp: hpFluct,
+            atk: atkFluct,
+            exp: expFluct,
+            gold: goldFluct,
+            drop: dropItem,
+            isBoss: base.isBoss || false
         };
-        addLog(`遭遇了 <span class="highlight">${currentMonster.name}</span> !`);
+
+        addLog(`遭遇了 <span class="highlight">${currentMonster.name}</span> (HP:${currentMonster.hp} 攻:${currentMonster.atk}) !`);
         updateUI();
     }
 
@@ -467,6 +477,7 @@
             return;
         }
 
+        // 自动使用药水
         if (player.hp < player.maxHp * 0.45) {
             if (player.potionsLarge > 0) {
                 player.potionsLarge--;
@@ -505,8 +516,8 @@
             currentMonster.hp = 0;
             updateUI();
 
-            let gainExp = currentMonster.exp * (currentWeather.id === "bloodmoon" ? 2.0 : 1.0);
-            let gainGold = currentMonster.gold * (currentWeather.id === "fog" ? 1.3 : 1.0);
+            let gainExp = Math.floor(currentMonster.exp * (currentWeather.id === "bloodmoon" ? 2.0 : 1.0));
+            let gainGold = Math.floor(currentMonster.gold * (currentWeather.id === "fog" ? 1.3 : 1.0));
 
             addLog(`击败 <span class="highlight">${currentMonster.name}</span>！经验+${gainExp}，金币+${gainGold}`);
 
@@ -523,7 +534,7 @@
                     codexData.bagHistory.add(itemNames[currentMonster.drop]);
                     addLog(`✨ 拾获：<span class="highlight">${itemNames[currentMonster.drop]}</span>`);
                 } else {
-                    addLog(`⚠️ 背包空间已满！错失了 <span class="highlight">${itemNames[currentMonster.drop]}</span>`);
+                    addLog(`⚠️ 背包容量已满！错失了 <span class="highlight">${itemNames[currentMonster.drop]}</span>`);
                 }
             }
 
@@ -565,7 +576,7 @@
         player.exp -= expLost;
         player.gold -= goldLost;
 
-        let deathLog = `<span class="death">⚠️ 战败倒下！死亡惩罚：经验-${expLost}，金币-${goldLost}</span>`;
+        let deathLog = `<span class="death">⚠️ 战败倒下！惩罚：经验-${expLost}，金币-${goldLost}</span>`;
 
         if (player.currentPet.type !== 'none') {
             deathLog += `<br><span class="death">☠️ 契约魔宠【${player.currentPet.name}】不幸阵亡了！</span>`;
@@ -602,18 +613,18 @@
         if (isWeapon) {
             if (finalStat > player.currentWeapon.stat) {
                 player.currentWeapon = { name: equipName, stat: finalStat, quality };
-                addLog(`<span class="rare">🎁 自动装备更好的武器【${equipName}】(攻击+${finalStat})！</span>`);
+                addLog(`<span class="rare">🎁 自动更换更强武器【${equipName}】(攻击+${finalStat})！</span>`);
             }
         } else {
             if (finalStat > player.currentArmor.stat) {
                 player.currentArmor = { name: equipName, stat: finalStat, quality };
-                addLog(`<span class="rare">🛡️ 自动装备更好的防具【${equipName}】(防御+${finalStat})！</span>`);
+                addLog(`<span class="rare">🛡️ 自动更换更强防具【${equipName}】(防御+${finalStat})！</span>`);
             }
         }
     }
 
     // -------------------------------------------------------------
-    // 4. 环境与系统辅助函数
+    // 4. 环境与辅助函数
     // -------------------------------------------------------------
     function checkWeatherChange() {
         weatherTurnCounter++;
@@ -621,14 +632,14 @@
             weatherTurnCounter = 0;
             if (Math.random() < 0.6) {
                 currentWeather = weatherList[Math.floor(Math.random() * weatherList.length)];
-                addLog(`<span class="weather">🌧️ 区域天气发生改变：【${currentWeather.name}】(${currentWeather.desc})</span>`);
+                addLog(`<span class="weather">🌧️ 天气变幻为：【${currentWeather.name}】(${currentWeather.desc})</span>`);
             }
         }
     }
 
     function learnSkill(skillId) {
-        if (player.sp <= 0) { alert("技能点(SP)不足！升级可以获得SP。"); return; }
-        if (skills[skillId] > 0) { alert("已经掌握该技能！"); return; }
+        if (player.sp <= 0) { alert("技能点(SP)不足！"); return; }
+        if (skills[skillId] > 0) { alert("已掌握该技能！"); return; }
 
         player.sp--;
         skills[skillId] = 1;
@@ -638,7 +649,7 @@
             player.hp = player.maxHp;
         }
 
-        addLog(`⚡ 学习了技能【${skillDefs.find(s=>s.id===skillId).name}】！`);
+        addLog(`⚡ 成功领悟【${skillDefs.find(s=>s.id===skillId).name}】！`);
         saveGame();
         updateUI();
     }
@@ -649,7 +660,7 @@
 
         for (let mat in recipe.materials) {
             if (inventory[mat] < recipe.materials[mat]) {
-                alert(`素材不足！缺少 ${itemNames[mat]}`);
+                alert(`材料不足！缺少 ${itemNames[mat]}`);
                 return;
             }
         }
@@ -678,7 +689,7 @@
         }
         codexData.crafts.add(recipe.name);
 
-        addLog(`🧪 成功合成【${recipe.name}】！`);
+        addLog(`🧪 炼金成功：【${recipe.name}】！`);
         saveGame();
         updateUI();
     }
@@ -710,7 +721,7 @@
     function buyPotion(type, count, price) {
         if (player.gold < price) { alert("金币不足！"); return; }
         if (getCurrentBagCount() >= player.maxBagCapacity && ((type === 'small' && player.potionsSmall === 0) || (type === 'large' && player.potionsLarge === 0))) {
-            alert("背包已满，请升级背包容量！");
+            alert("背包已满！");
             return;
         }
         player.gold -= price;
@@ -719,19 +730,19 @@
             player.potionsLarge += count;
             codexData.bagHistory.add("大特效药水");
         }
-        addLog(`🛒 购买药水成功！`);
+        addLog(`🛒 购买道具成功！`);
         saveGame();
         updateUI();
     }
 
     function buyBagUpgrade(id, price, extraCap) {
         if (player.gold < price) { alert("金币不足！"); return; }
-        if (player.bagUpgradesPurchased.includes(id)) { alert("已购买过此背包升级！"); return; }
+        if (player.bagUpgradesPurchased.includes(id)) { alert("已购买过此扩展包！"); return; }
 
         player.gold -= price;
         player.maxBagCapacity += extraCap;
         player.bagUpgradesPurchased.push(id);
-        addLog(`🎒 背包成功升级！额外新增 +${extraCap} 容量格！`);
+        addLog(`🎒 背包空间扩展 +${extraCap}！`);
         saveGame();
         updateUI();
     }
@@ -811,7 +822,7 @@
     }
 
     // -------------------------------------------------------------
-    // 5. 视图渲染与 UI 更新 (修复了魔宠加成文案更新问题)
+    // 5. 视图渲染与 UI 更新
     // -------------------------------------------------------------
     function updateUI() {
         document.getElementById("player-level").innerText = `Lv.${player.level}`;
@@ -836,7 +847,7 @@
         document.getElementById("equip-armor-stat").innerText = `防御 +${player.currentArmor.stat}`;
         document.getElementById("equip-pet-name").innerText = player.currentPet.name;
 
-        // 【新增/修复】动态刷新魔宠属性描述
+        // 动态刷新魔宠描述
         let petStatText = "无加成";
         if (player.currentPet.type === 'heal') petStatText = `每轮恢复 ${player.currentPet.val} HP`;
         else if (player.currentPet.type === 'crit') petStatText = `暴击率 +${player.currentPet.val}%`;
@@ -983,7 +994,7 @@
         logBox.insertBefore(logItem, logBox.firstChild);
     }
 
-    // 初始化程序入口
+    // 入口：初始化
     loadGame();
     updateUI();
 </script>
