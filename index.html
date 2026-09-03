@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>异世界地下城挂机录 - RPG v5.0 地区大扩张</title>
+    <title>异世界地下城挂机录 - RPG v6.0</title>
     <style>
         :root {
             --bg-color: #121319;
@@ -19,7 +19,6 @@
             --unknown: #44475a;
             --crit-color: #ffb86c;
             --epic-color: #bd93f9;
-            --legend-color: #ff79c6;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', "Microsoft YaHei", sans-serif; }
@@ -49,7 +48,7 @@
         .equip-slot .val { color: var(--primary); font-weight: bold; margin-top: 2px; font-size: 0.8rem; }
 
         .tab-menu { display: flex; gap: 4px; margin-top: 5px; flex-wrap: wrap; }
-        .tab-btn { flex: 1; min-width: 60px; padding: 6px 2px; background: #181922; border: 1px solid var(--border); color: var(--subtext); border-radius: 6px; cursor: pointer; font-size: 0.75rem; text-align: center; }
+        .tab-btn { flex: 1; min-width: 50px; padding: 6px 2px; background: #181922; border: 1px solid var(--border); color: var(--subtext); border-radius: 6px; cursor: pointer; font-size: 0.75rem; text-align: center; }
         .tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); font-weight: bold; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
@@ -57,6 +56,14 @@
         .item-list { display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; max-height: 220px; overflow-y: auto; padding-right: 4px; }
         .item-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: #161720; border-radius: 6px; border: 1px solid #282a36; }
         .item-desc { font-size: 0.75rem; color: var(--subtext); }
+
+        .codex-section { margin-bottom: 10px; }
+        .codex-title { font-size: 0.8rem; color: var(--accent); margin-bottom: 4px; font-weight: bold; border-bottom: 1px solid #282a36; padding-bottom: 2px; }
+        .codex-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+        .codex-card { background: #161720; padding: 6px 8px; border-radius: 6px; font-size: 0.75rem; border: 1px solid #282a36; }
+        .codex-card.locked { color: var(--unknown); border-color: #1f202c; }
+        .codex-card.locked .name { color: var(--unknown); }
+        .codex-card .name { font-weight: bold; color: var(--text); }
 
         .region-select { width: 100%; padding: 8px; background: #161720; color: var(--text); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem; }
 
@@ -82,6 +89,7 @@
             <div>总防御: <span id="player-def">2</span></div>
             <div>金币: <span id="player-gold" style="color:var(--gold-color)">0</span> 🪙</div>
             <div>击杀数: <span id="player-kills">0</span></div>
+            <div>死亡次数: <span id="player-deaths" style="color:var(--hp-color)">0</span> ☠️</div>
         </div>
         <div>
             <div style="font-size: 0.75rem; display: flex; justify-content: space-between;">
@@ -123,9 +131,7 @@
 
     <!-- 地区选择与战斗面板 -->
     <div class="card battle-zone">
-        <select class="region-select" id="region-select" onchange="changeRegion()">
-            <!-- 动态生成地区选项 -->
-        </select>
+        <select class="region-select" id="region-select" onchange="changeRegion()"></select>
         <div class="monster-name" id="monster-name">寻找魔物中...</div>
         <div class="monster-hp" id="monster-hp-text">HP: -/-</div>
         <div class="bar-container" style="margin-top: 6px;">
@@ -143,9 +149,10 @@
     <div class="card">
         <div class="tab-menu">
             <div class="tab-btn active" onclick="switchTab('bag')">🎒 背包</div>
-            <div class="tab-btn" onclick="switchTab('shop')">🏪 药局</div>
+            <div class="tab-btn" onclick="switchTab('shop')">🏪 商店</div>
             <div class="tab-btn" onclick="switchTab('craft')">🧪 炼金</div>
             <div class="tab-btn" onclick="switchTab('pet')">🐾 魔宠</div>
+            <div class="tab-btn" onclick="switchTab('codex')">📖 图鉴</div>
         </div>
 
         <div style="margin-top: 10px;">
@@ -154,7 +161,7 @@
                 <div class="item-list" id="bag-list"></div>
             </div>
 
-            <!-- 药局/高阶商店 -->
+            <!-- 商店 -->
             <div id="tab-shop" class="tab-content">
                 <div class="item-list" id="shop-list">
                     <div class="item-row">
@@ -172,17 +179,15 @@
                         </div>
                     </div>
                     <div class="item-row">
-                        <div>狂暴药剂 <span class="item-desc">(永久提升 5 暴击率)</span></div>
+                        <div>狂暴药剂 <span class="item-desc">(永久 +5% 暴击率)</span></div>
                         <button class="btn-sm" onclick="buyElixir('crit', 500)">500 金币</button>
                     </div>
                 </div>
             </div>
 
-            <!-- 炼金（多分支 & 自动合成） -->
+            <!-- 炼金（丰富的多分支配方） -->
             <div id="tab-craft" class="tab-content">
-                <div class="item-list" id="craft-list">
-                    <!-- 动态渲染 -->
-                </div>
+                <div class="item-list" id="craft-list"></div>
             </div>
 
             <!-- 魔宠 -->
@@ -202,6 +207,20 @@
                     </div>
                 </div>
             </div>
+
+            <!-- 图鉴 (完整回归) -->
+            <div id="tab-codex" class="tab-content">
+                <div class="item-list" style="max-height: 220px;">
+                    <div class="codex-section">
+                        <div class="codex-title">魔物图鉴</div>
+                        <div class="codex-grid" id="codex-monsters"></div>
+                    </div>
+                    <div class="codex-section">
+                        <div class="codex-title">解锁配方图鉴</div>
+                        <div class="codex-grid" id="codex-crafts"></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -209,16 +228,16 @@
     <div class="card">
         <div class="title">📜 冒险日志</div>
         <div class="log-box" id="log-box">
-            <div class="log-item">准备就绪，选择地区开启冒险吧...</div>
+            <div class="log-item">准备就绪，开启冒险吧...</div>
         </div>
     </div>
 </div>
 
 <script>
-    // 玩家数据
+    // 玩家初始属性（包含死亡次数 & 初始赠送2瓶药水）
     let player = {
-        level: 1, hp: 100, maxHp: 100, atk: 8, def: 2, exp: 0, maxExp: 50, gold: 0, kills: 0,
-        potionsSmall: 0,
+        level: 1, hp: 100, maxHp: 100, atk: 8, def: 2, exp: 0, maxExp: 50, gold: 0, kills: 0, deaths: 0,
+        potionsSmall: 2, // 开局赠送2瓶药水！
         potionsLarge: 0,
         critRate: 10,
         currentRegion: 0,
@@ -238,10 +257,9 @@
         refined_iron: "🧱 精炼铁块"
     };
 
-    // 记录已解锁的自动合成配方 (Recipe IDs)
     let unlockedAutoCrafts = new Set();
+    let codexMonsters = new Set();
 
-    // 地区配置与怪物矩阵
     const regions = [
         {
             name: "静谧森林 (Lv.1 - 10)", reqLv: 1,
@@ -277,41 +295,55 @@
         }
     ];
 
-    // 炼金配方定义
+    // 大幅丰富的炼金配方（覆盖所有材料的多分支运用）
     const craftRecipes = [
-        { id: "potion_large", name: "🧪 大特效药水 x2", materials: { slime_gel: 4 }, type: "item", target: "potionsLarge", amount: 2 },
+        // 史莱姆粘液衍生
+        { id: "potion_large", name: "🧪 大特效药水 x2", materials: { slime_gel: 3 }, type: "item", target: "potionsLarge", amount: 2 },
+        { id: "slime_armor", name: "🛡️ 粘液防护服 (防御+6)", materials: { slime_gel: 5 }, type: "armor", stat: 6 },
+        
+        // 哥布林布片衍生
+        { id: "goblin_blade", name: "🗡️ 哥布林捷刃 (攻击+14)", materials: { goblin_cloth: 4 }, type: "weapon", stat: 14 },
+        
+        // 铁矿石衍生
         { id: "refined_iron", name: "🧱 精炼铁块", materials: { iron_ore: 3 }, type: "mat", target: "refined_iron", amount: 1 },
-        { id: "equip_sword", name: "🗡️ 烈焰长剑 (攻击+45)", materials: { refined_iron: 2, volcano_stone: 3 }, type: "weapon", stat: 45 },
-        { id: "equip_armor", name: "🛡️ 龙鳞重铠 (防御+35)", materials: { dragon_scale: 2, refined_iron: 2 }, type: "armor", stat: 35 }
+        { id: "iron_shield", name: "🛡️ 精钢重盾 (防御+15)", materials: { iron_ore: 5 }, type: "armor", stat: 15 },
+
+        // 碎裂骨头衍生
+        { id: "bone_sword", name: "🗡️ 骷髅弯刀 (攻击+28)", materials: { bone: 4, iron_ore: 2 }, type: "weapon", stat: 28 },
+
+        // 高阶火山赤石/龙鳞衍生
+        { id: "equip_sword", name: "⚔️ 烈焰灭世剑 (攻击+65)", materials: { refined_iron: 3, volcano_stone: 3 }, type: "weapon", stat: 65 },
+        { id: "equip_armor", name: "🛡️ 熔岩龙鳞铠 (防御+50)", materials: { dragon_scale: 3, refined_iron: 2 }, type: "armor", stat: 50 }
     ];
 
     let currentMonster = null;
     let isAuto = false;
     let timer = null;
 
-    // --- 保存与加载 ---
     function saveGame() {
         let saveData = {
             player, inventory,
-            unlockedAutoCrafts: Array.from(unlockedAutoCrafts)
+            unlockedAutoCrafts: Array.from(unlockedAutoCrafts),
+            codexMonsters: Array.from(codexMonsters)
         };
-        localStorage.setItem("rpg_save_v5", JSON.stringify(saveData));
+        localStorage.setItem("rpg_save_v6", JSON.stringify(saveData));
     }
 
     function loadGame() {
-        let data = localStorage.getItem("rpg_save_v5");
+        let data = localStorage.getItem("rpg_save_v6");
         if (data) {
             let parsed = JSON.parse(data);
             player = parsed.player;
             inventory = parsed.inventory;
             unlockedAutoCrafts = new Set(parsed.unlockedAutoCrafts || []);
-            addLog(`💾 已成功加载本地进度！`);
+            codexMonsters = new Set(parsed.codexMonsters || []);
+            addLog(`💾 自动加载本地进度成功！`);
         }
     }
 
     function resetSave() {
-        if (confirm("确定要彻底重置进度吗？")) {
-            localStorage.removeItem("rpg_save_v5");
+        if (confirm("确定重置进度吗？(新手礼包药水将会重新发放)")) {
+            localStorage.removeItem("rpg_save_v6");
             location.reload();
         }
     }
@@ -355,7 +387,6 @@
     function gameLoop() {
         if (!isAuto) return;
 
-        // 挂机触发：自动合成已解锁的配方
         processAutoCrafting();
 
         if (!currentMonster || currentMonster.hp <= 0) {
@@ -364,7 +395,7 @@
             return;
         }
 
-        // 智能喝药 (优先喝大药，再喝小药)
+        // 自动使用药水
         if (player.hp < player.maxHp * 0.45) {
             if (player.potionsLarge > 0) {
                 player.potionsLarge--;
@@ -377,10 +408,8 @@
             }
         }
 
-        // 魔宠加成
         if (player.currentPet.type === 'heal') player.hp = Math.min(player.maxHp, player.hp + player.currentPet.val);
 
-        // 战斗伤害计算
         let totalAtk = player.atk + player.currentWeapon.stat + (player.currentPet.type === 'atk' ? player.currentPet.val : 0);
         let totalCrit = player.critRate + (player.currentPet.type === 'crit' ? player.currentPet.val : 0);
         let isCrit = Math.random() * 100 < totalCrit;
@@ -393,17 +422,16 @@
             updateUI();
             addLog(`击败 <span class="highlight">${currentMonster.name}</span>！经验+${currentMonster.exp}，金币+${currentMonster.gold}`);
 
+            codexMonsters.add(currentMonster.name);
             player.exp += currentMonster.exp;
             player.gold += currentMonster.gold;
             player.kills++;
 
-            // 掉落基础素材
             if (currentMonster.drop && Math.random() < 0.75) {
                 inventory[currentMonster.drop]++;
-                addLog(`✨ 拾获素材：<span class="highlight">${itemNames[currentMonster.drop]}</span>`);
+                addLog(`✨ 拾获：<span class="highlight">${itemNames[currentMonster.drop]}</span>`);
             }
 
-            // BOSS/精英怪 概率掉落带品质的高阶装备
             if (currentMonster.isBoss || Math.random() < 0.1) {
                 dropRandomEquipment(currentMonster.isBoss);
             }
@@ -421,8 +449,10 @@
 
             if (player.hp <= 0) {
                 player.hp = player.maxHp;
-                addLog(`<span style="color:var(--hp-color)">⚠️ 战败，已紧急返城疗伤...</span>`);
+                player.deaths++; // 记录死亡次数！
+                addLog(`<span style="color:var(--hp-color)">⚠️ 战败倒下！死亡次数+1 (累计:${player.deaths})</span>`);
                 currentMonster = null;
+                saveGame();
                 timer = setTimeout(gameLoop, 2500);
             } else {
                 timer = setTimeout(gameLoop, 800);
@@ -431,7 +461,6 @@
         updateUI();
     }
 
-    // 掉落随机品质装备
     function dropRandomEquipment(isBoss) {
         let isWeapon = Math.random() > 0.5;
         let baseStat = (player.currentRegion + 1) * 12;
@@ -449,12 +478,12 @@
         if (isWeapon) {
             if (finalStat > player.currentWeapon.stat) {
                 player.currentWeapon = { name: equipName, stat: finalStat, quality };
-                addLog(`<span class="rare">🎁 换上更好的掉落武器【${equipName}】(攻击+${finalStat})！</span>`);
+                addLog(`<span class="rare">🎁 自动装备更好的武器【${equipName}】(攻击+${finalStat})！</span>`);
             }
         } else {
             if (finalStat > player.currentArmor.stat) {
                 player.currentArmor = { name: equipName, stat: finalStat, quality };
-                addLog(`<span class="rare">🛡️ 换上更好的掉落防具【${equipName}】(防御+${finalStat})！</span>`);
+                addLog(`<span class="rare">🛡️ 自动装备更好的防具【${equipName}】(防御+${finalStat})！</span>`);
             }
         }
     }
@@ -464,25 +493,17 @@
         let base = reg.monsters[Math.floor(Math.random() * reg.monsters.length)];
         
         currentMonster = {
-            name: base.name,
-            maxHp: base.hp,
-            hp: base.hp,
-            atk: base.atk,
-            exp: base.exp,
-            gold: base.gold,
-            drop: base.drop,
-            isBoss: base.isBoss || false
+            name: base.name, maxHp: base.hp, hp: base.hp, atk: base.atk,
+            exp: base.exp, gold: base.gold, drop: base.drop, isBoss: base.isBoss || false
         };
         addLog(`遭遇了 <span class="highlight">${currentMonster.name}</span> !`);
         updateUI();
     }
 
-    // 手动执行炼金
     function manualCraft(recipeId) {
         let recipe = craftRecipes.find(r => r.id === recipeId);
         if (!recipe) return;
 
-        // 检查素材
         for (let mat in recipe.materials) {
             if (inventory[mat] < recipe.materials[mat]) {
                 alert(`素材不足！缺少 ${itemNames[mat]}`);
@@ -490,31 +511,24 @@
             }
         }
 
-        // 扣除素材
-        for (let mat in recipe.materials) {
-            inventory[mat] -= recipe.materials[mat];
-        }
+        for (let mat in recipe.materials) inventory[mat] -= recipe.materials[mat];
 
-        // 结算获得
         if (recipe.type === "item") player[recipe.target] += recipe.amount;
         if (recipe.type === "mat") inventory[recipe.target] += recipe.amount;
         if (recipe.type === "weapon") player.currentWeapon = { name: recipe.name, stat: recipe.stat, quality: "炼金打造" };
         if (recipe.type === "armor") player.currentArmor = { name: recipe.name, stat: recipe.stat, quality: "炼金打造" };
 
-        // 标记：此配方已合成过，以后开启【挂机自动合成】
         unlockedAutoCrafts.add(recipeId);
-        addLog(`🧪 成功合成【${recipe.name}】！已记录配方（后续将挂机自动合成）。`);
+        addLog(`🧪 合成【${recipe.name}】！已激活挂机自动合成。`);
         saveGame();
         updateUI();
     }
 
-    // 挂机自动合成机制
     function processAutoCrafting() {
         unlockedAutoCrafts.forEach(recipeId => {
             let recipe = craftRecipes.find(r => r.id === recipeId);
             if (!recipe) return;
 
-            // 检查素材是否满足
             let canCraft = true;
             for (let mat in recipe.materials) {
                 if (inventory[mat] < recipe.materials[mat]) canCraft = false;
@@ -524,7 +538,7 @@
                 for (let mat in recipe.materials) inventory[mat] -= recipe.materials[mat];
                 if (recipe.type === "item") player[recipe.target] += recipe.amount;
                 if (recipe.type === "mat") inventory[recipe.target] += recipe.amount;
-                addLog(`⚙️ [自动炼金] 自动合成了 <span class="gain">${recipe.name}</span>！`);
+                addLog(`⚙️ [自动炼金] 挂机合成了 <span class="gain">${recipe.name}</span>！`);
             }
         });
     }
@@ -568,7 +582,7 @@
             player.hp = player.maxHp;
             player.atk += 4;
             player.def += 2;
-            addLog(`🎉 <span class="gain">等级提升至 Lv.${player.level}！属性大幅提升！</span>`);
+            addLog(`🎉 <span class="gain">等级提升至 Lv.${player.level}！</span>`);
         }
     }
 
@@ -577,6 +591,7 @@
         document.getElementById("player-atk").innerText = player.atk + player.currentWeapon.stat + (player.currentPet.type === 'atk' ? player.currentPet.val : 0);
         document.getElementById("player-def").innerText = player.def + player.currentArmor.stat;
         document.getElementById("player-kills").innerText = player.kills;
+        document.getElementById("player-deaths").innerText = player.deaths;
         document.getElementById("player-gold").innerText = player.gold;
 
         let totalCrit = player.critRate + (player.currentPet.type === 'crit' ? player.currentPet.val : 0);
@@ -593,7 +608,6 @@
         document.getElementById("equip-armor-stat").innerText = `防御 +${player.currentArmor.stat}`;
         document.getElementById("equip-pet-name").innerText = player.currentPet.name;
 
-        // 渲染地区下拉菜单
         let regionSelect = document.getElementById("region-select");
         regionSelect.innerHTML = regions.map((r, i) => 
             `<option value="${i}" ${i === player.currentRegion ? 'selected' : ''}>${r.name} ${player.level < r.reqLv ? '(未解锁)' : ''}</option>`
@@ -605,7 +619,6 @@
             document.getElementById("monster-hp-bar").style.width = `${(Math.max(0, currentMonster.hp) / currentMonster.maxHp) * 100}%`;
         }
 
-        // 背包
         let bagBox = document.getElementById("bag-list");
         let html = `
             <div class="item-row"><div>🧪 小型药水</div><div>拥有: ${player.potionsSmall}</div></div>
@@ -618,8 +631,8 @@
         }
         bagBox.innerHTML = html;
 
-        // 炼金列表渲染
         renderCraftList();
+        renderCodex();
     }
 
     function renderCraftList() {
@@ -632,7 +645,7 @@
             html += `
                 <div class="item-row">
                     <div>
-                        <div>${r.name} ${isAutoUnlocked ? '<span style="color:var(--exp-color); font-size:0.7rem;">[已开启挂机自动合成]</span>' : ''}</div>
+                        <div>${r.name} ${isAutoUnlocked ? '<span style="color:var(--exp-color); font-size:0.7rem;">[自动炼金]</span>' : ''}</div>
                         <div class="item-desc">需要：${reqText}</div>
                     </div>
                     <button class="btn-sm" onclick="manualCraft('${r.id}')">合成</button>
@@ -640,6 +653,30 @@
             `;
         });
         craftBox.innerHTML = html;
+    }
+
+    function renderCodex() {
+        let mHtml = "";
+        regions.forEach(r => {
+            r.monsters.forEach(m => {
+                let unlocked = codexMonsters.has(m.name);
+                mHtml += `<div class="codex-card ${unlocked ? '' : 'locked'}">
+                    <div class="name">${unlocked ? m.name : '???'}</div>
+                    <div>${unlocked ? '基础HP:' + m.hp : '未遭遇'}</div>
+                </div>`;
+            });
+        });
+        document.getElementById("codex-monsters").innerHTML = mHtml;
+
+        let cHtml = "";
+        craftRecipes.forEach(r => {
+            let unlocked = unlockedAutoCrafts.has(r.id);
+            cHtml += `<div class="codex-card ${unlocked ? '' : 'locked'}">
+                <div class="name">${unlocked ? r.name : '???'}</div>
+                <div>${unlocked ? '已掌握配方' : '未手动合成'}</div>
+            </div>`;
+        });
+        document.getElementById("codex-crafts").innerHTML = cHtml;
     }
 
     function addLog(text) {
