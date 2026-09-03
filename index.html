@@ -364,6 +364,28 @@
     let timer = null;
     let attackTurnCount = 0;
 
+    // 各材料的出售单价配置
+    const itemPrices = {
+         slime_gel: 2,
+         goblin_cloth: 5,
+         iron_ore: 10,
+         bone: 15,
+         volcano_stone: 30,
+         dragon_scale: 80,
+         refined_iron: 25
+    };
+
+    function sellItem(itemKey) {
+         if (inventory[itemKey] > 0) {
+             inventory[itemKey]--;
+             let price = itemPrices[itemKey] || 1;
+             player.gold += price;
+             addLog(`💰 出售了 1 个 <span class="highlight">${itemNames[itemKey]}</span>，获得 ${price} 金币！`);
+             saveGame();
+             updateUI();
+         }
+    }
+    
     // -------------------------------------------------------------
     // 2. 数据持久化
     // -------------------------------------------------------------
@@ -884,7 +906,15 @@
         
         for (let key in inventory) {
             if (inventory[key] > 0) {
-                html += `<div class="item-row"><div>${itemNames[key]}</div><div>x${inventory[key]}</div></div>`;
+                let price = itemPrices[key] || 1;
+                html += `
+                    <div class="item-row">
+                        <div>${itemNames[key]} <span class="item-desc">(单价: ${price}💰)</span></div>
+                        <div class="btn-group" style="align-items:center;">
+                            <span style="margin-right:8px;">x${inventory[key]}</span>
+                            <button class="btn-sm" onclick="sellItem('${key}')">出售 1 个</button>
+                        </div>
+                    </div>`;
             }
         }
         if (html === "") html = `<div style="text-align:center; color:var(--subtext); padding:10px;">背包空空如也...</div>`;
