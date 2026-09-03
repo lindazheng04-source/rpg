@@ -441,7 +441,7 @@
         let atkFluct = getRandomInt(Math.floor(base.atk * 0.85), Math.ceil(base.atk * 1.15));
         // 经验(±10%)与金币(±20%)浮动
         let expFluct = getRandomInt(Math.floor(base.exp * 0.9), Math.ceil(base.exp * 1.1));
-        let goldFluct = getRandomInt(Math.floor(base.gold * 0.8), Math.ceil(base.gold * 1.2));
+        let goldFluct = Math.floor(getRandomInt(Math.floor(base.gold * 0.8), Math.ceil(base.gold * 1.2)));
 
         // 掉落物品类型动态浮动（80% 掉落专属材料，20% 掉落杂物/通用材料）
         let dropItem = base.drop;
@@ -573,8 +573,9 @@
 
         let expLost = Math.floor(player.exp * 0.1);
         let goldLost = Math.floor(player.gold * 0.1);
+
         player.exp -= expLost;
-        player.gold -= goldLost;
+        player.gold = Math.max(0, Math.floor(player.gold - goldLost));
 
         let deathLog = `<span class="death">⚠️ 战败倒下！惩罚：经验-${expLost}，金币-${goldLost}</span>`;
 
@@ -829,7 +830,7 @@
         document.getElementById("player-atk").innerText = player.atk + player.currentWeapon.stat + (player.currentPet.type === 'atk' ? player.currentPet.val : 0);
         document.getElementById("player-def").innerText = player.def + player.currentArmor.stat;
         document.getElementById("player-deaths").innerText = player.deaths;
-        document.getElementById("player-gold").innerText = player.gold;
+        document.getElementById("player-gold").innerText = Math.floor(player.gold);
         document.getElementById("player-sp").innerText = player.sp;
         document.getElementById("bag-capacity").innerText = `${getCurrentBagCount()}/${player.maxBagCapacity}`;
 
