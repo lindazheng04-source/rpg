@@ -380,7 +380,7 @@
     let attackTurnCount = 0;
 
     // -------------------------------------------------------------
-    // 2. 数据持久化逻辑 (写盘/读盘/防版本覆写重置)
+    // 2. 数据持久化逻辑
     // -------------------------------------------------------------
     function saveGame() {
         let saveData = {
@@ -396,14 +396,11 @@
         localStorage.setItem("rpg_save_v8", JSON.stringify(saveData));
     }
 
-    // 【新增核心保护】版本更新无缝兼容读取（防止新代码重置存档）
     function loadGame() {
         let data = localStorage.getItem("rpg_save_v8");
         if (data) {
             try {
                 let parsed = JSON.parse(data);
-                
-                // 使用对象合并，保证新版本追加的属性/技能/材料字段不会丢失
                 player = Object.assign({}, defaultPlayer, parsed.player || {});
                 inventory = Object.assign({}, defaultInventory, parsed.inventory || {});
                 skills = Object.assign({}, defaultSkills, parsed.skills || {});
@@ -416,7 +413,7 @@
                     codexData.crafts = new Set(parsed.codexData.crafts || []);
                     codexData.bagHistory = new Set(parsed.codexData.bagHistory || []);
                 }
-                addLog(`💾 自动加载本地进度成功！(已完成旧版本数据安全迁移)`);
+                addLog(`💾 自动加载本地进度成功！`);
             } catch (e) {
                 console.error("存档解析失败，恢复初始设置", e);
             }
@@ -431,25 +428,21 @@
     }
 
     // -------------------------------------------------------------
-    // 3. 战斗与遭遇算法 (降低 BOSS 遇敌率)
+    // 3. 战斗与遭遇算法 (降低 BOSS 遇敌率至 5%)
     // -------------------------------------------------------------
-    // 【核心改进】生成怪物机制：将 BOSS 遭遇概率压低至 5%
     function spawnMonster() {
         let currRegIndex = player.currentRegion;
         let regionMonsters = regions[currRegIndex].monsters;
 
-        // 分离普通怪与 BOSS
         let normalMonsters = regionMonsters.filter(m => !m.isBoss);
         let bossMonsters = regionMonsters.filter(m => m.isBoss);
 
-        // 如果包含跨低级区域机制，混入低级普通怪
         if (currRegIndex > 0 && Math.random() < 0.25) {
             let prevRegIndex = Math.floor(Math.random() * currRegIndex);
             normalMonsters = normalMonsters.concat(regions[prevRegIndex].monsters.filter(m => !m.isBoss));
         }
 
         let base = null;
-        // 只有 5% 的低概率才会遭遇该区域的 BOSS
         if (bossMonsters.length > 0 && Math.random() < 0.05) {
             base = bossMonsters[Math.floor(Math.random() * bossMonsters.length)];
             addLog(`<span class="death">⚠️ 警报！你踏入了危险领地，遇到了顶级 BOSS !</span>`);
@@ -465,7 +458,6 @@
         updateUI();
     }
 
-    // 挂机与主战斗循环
     function gameLoop() {
         if (!isAuto) return;
 
@@ -478,7 +470,6 @@
             return;
         }
 
-        // 自动战术恢复 (血量低于 45% 使用药水)
         if (player.hp < player.maxHp * 0.45) {
             if (player.potionsLarge > 0) {
                 player.potionsLarge--;
@@ -491,10 +482,8 @@
             }
         }
 
-        // 魔宠每轮辅助
         if (player.currentPet.type === 'heal') player.hp = Math.min(player.maxHp, player.hp + player.currentPet.val);
 
-        // 伤害计算逻辑
         let totalAtk = player.atk + player.currentWeapon.stat + (player.currentPet.type === 'atk' ? player.currentPet.val : 0);
         let totalCrit = player.critRate + (player.currentPet.type === 'crit' ? player.currentPet.val : 0) + (skills.lucky_star ? 8 : 0);
 
@@ -510,13 +499,11 @@
         damageToMonster = Math.floor(damageToMonster);
         currentMonster.hp -= damageToMonster;
 
-        // 汲血技能逻辑
         if (skills.vampire > 0) {
             let healAmt = Math.floor(damageToMonster * 0.1);
             player.hp = Math.min(player.maxHp, player.hp + healAmt);
         }
 
-        // 结算：怪物阵亡
         if (currentMonster.hp <= 0) {
             currentMonster.hp = 0;
             updateUI();
@@ -531,7 +518,6 @@
             player.gold += gainGold;
             player.kills++;
 
-            // 掉率与拾取逻辑
             let dropRate = 0.75 + (skills.lucky_star ? 0.15 : 0);
             if (currentMonster.drop && Math.random() < dropRate) {
                 if (getCurrentBagCount() < player.maxBagCapacity || inventory[currentMonster.drop] > 0) {
@@ -553,7 +539,6 @@
             saveGame();
             timer = setTimeout(gameLoop, 1000);
         } else {
-            // 怪物回击玩家
             let totalDef = player.def + player.currentArmor.stat;
             let mAtk = currentMonster.atk * (currentWeather.id === "bloodmoon" ? 1.5 : 1.0);
             let damage = Math.max(1, Math.floor(mAtk - totalDef));
@@ -562,7 +547,6 @@
             if (isHeavyStrike) addLog(`<span class="crit">⚡ 触发【重击】！造成 ${damageToMonster} 伤害！</span>`);
             else if (isCrit) addLog(`<span class="crit">💥 触发暴击！造成 ${damageToMonster} 伤害！</span>`);
 
-            // 玩家阵亡惩罚
             if (player.hp <= 0) {
                 applyDeathPenalty();
                 currentMonster = null;
@@ -575,7 +559,6 @@
         updateUI();
     }
 
-    // 死亡惩罚逻辑
     function applyDeathPenalty() {
         player.hp = player.maxHp;
         player.deaths++;
@@ -604,7 +587,6 @@
         addLog(deathLog);
     }
 
-    // 装备随机掉落算式
     function dropRandomEquipment(isBoss) {
         let isWeapon = Math.random() > 0.5;
         let baseStat = (player.currentRegion + 1) * 12;
@@ -634,7 +616,7 @@
     }
 
     // -------------------------------------------------------------
-    // 4. 环境与系统辅助函数 (技能/炼金/商店/天气的执行函数)
+    // 4. 环境与系统辅助函数
     // -------------------------------------------------------------
     function checkWeatherChange() {
         weatherTurnCounter++;
@@ -832,7 +814,7 @@
     }
 
     // -------------------------------------------------------------
-    // 5. 视图渲染与 UI 更新 (UI 响应与状态同步)
+    // 5. 视图渲染与 UI 更新 (修复了魔宠加成文案更新问题)
     // -------------------------------------------------------------
     function updateUI() {
         document.getElementById("player-level").innerText = `Lv.${player.level}`;
@@ -856,6 +838,13 @@
         document.getElementById("equip-armor-name").innerText = player.currentArmor.name;
         document.getElementById("equip-armor-stat").innerText = `防御 +${player.currentArmor.stat}`;
         document.getElementById("equip-pet-name").innerText = player.currentPet.name;
+
+        // 【新增/修复】动态刷新魔宠属性描述
+        let petStatText = "无加成";
+        if (player.currentPet.type === 'heal') petStatText = `每轮恢复 ${player.currentPet.val} HP`;
+        else if (player.currentPet.type === 'crit') petStatText = `暴击率 +${player.currentPet.val}%`;
+        else if (player.currentPet.type === 'atk') petStatText = `攻击力 +${player.currentPet.val}`;
+        document.getElementById("equip-pet-stat").innerText = petStatText;
 
         document.getElementById("weather-tag").innerText = `${currentWeather.name} (${currentWeather.desc})`;
 
