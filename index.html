@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>异世界地下城挂机录 - RPG v8.0</title>
+    <title>异世界地下城挂机录 - RPG v8.1</title>
+    <!-- [样式区] 负责界面的色彩、高亮、网格布局与响应式样式 -->
     <style>
         :root {
             --bg-color: #121319;
@@ -82,7 +83,9 @@
 </head>
 <body>
 
+<!-- [视图区] 渲染前端用户界面 -->
 <div class="game-container">
+    <!-- 玩家基本属性卡片 -->
     <div class="card">
         <div class="title">
             <span>⚔️ 冒险者状态</span>
@@ -112,6 +115,7 @@
         </div>
     </div>
 
+    <!-- 装备与魔宠界面卡片 -->
     <div class="card">
         <div class="title" style="font-size:0.9rem;">🗡️ 当前装备 & 魔宠</div>
         <div class="equip-grid">
@@ -133,6 +137,7 @@
         </div>
     </div>
 
+    <!-- 战斗监控区域 -->
     <div class="card battle-zone">
         <select class="region-select" id="region-select" onchange="changeRegion()"></select>
         <div class="weather-tag" id="weather-tag">☀️ 天气：晴空 (无特殊效果)</div>
@@ -143,11 +148,13 @@
         </div>
     </div>
 
+    <!-- 主控操作按钮 -->
     <div style="display:flex; gap:8px;">
         <button id="toggle-btn" class="btn" onclick="toggleAutoBattle()">开始挂机探索</button>
         <button class="btn-sm" style="background:#44475a; padding:0 10px;" onclick="resetSave()">重置进度</button>
     </div>
 
+    <!-- 多标签页卡片 (背包、技能、商店、炼金、魔宠、图鉴) -->
     <div class="card">
         <div class="tab-menu">
             <div class="tab-btn active" onclick="switchTab('bag')">🎒 背包</div>
@@ -246,6 +253,7 @@
         </div>
     </div>
 
+    <!-- 动态战斗日志框 -->
     <div class="card">
         <div class="title">📜 冒险日志</div>
         <div class="log-box" id="log-box">
@@ -254,24 +262,30 @@
     </div>
 </div>
 
+<!-- [逻辑区] JavaScript 核心算法与数值管理 -->
 <script>
-    let player = {
+    // -------------------------------------------------------------
+    // 1. 数据模型定义（包含玩家属性、默认初始状态与全局数据库）
+    // -------------------------------------------------------------
+    const defaultPlayer = {
         level: 1, hp: 100, maxHp: 100, atk: 8, def: 2, exp: 0, maxExp: 50, gold: 0, kills: 0, deaths: 0,
         potionsSmall: 2, potionsLarge: 0, critRate: 10, currentRegion: 0, maxBagCapacity: 15,
-        sp: 0, // 技能点
+        sp: 0,
         bagUpgradesPurchased: [],
         currentWeapon: { name: "新手木剑", stat: 2, quality: "普通" },
         currentArmor: { name: "破旧布衣", stat: 1, quality: "普通" },
         currentPet: { name: "无", type: "none", val: 0 }
     };
+    let player = JSON.parse(JSON.stringify(defaultPlayer));
 
-    // 技能学习记录 (技能id: 等级)
-    let skills = {
+    // 默认技能配置
+    const defaultSkills = {
         heavy_strike: 0, // 重击 (概率造成200%伤害)
         toughness: 0,    // 坚韧 (+15% 生命上限)
         vampire: 0,      // 汲血 (攻击吸血10%)
         lucky_star: 0    // 幸运 (+8% 暴击率)
     };
+    let skills = JSON.parse(JSON.stringify(defaultSkills));
 
     const skillDefs = [
         { id: "heavy_strike", name: "💥 强力重击", desc: "每3轮攻击必定触发一次200%倍率的物理重击" },
@@ -280,10 +294,12 @@
         { id: "lucky_star", name: "🌟 幸运星", desc: "暴击率增加 8%，且极度提升材料掉率" }
     ];
 
-    let inventory = {
+    // 默认材料背包配置
+    const defaultInventory = {
         slime_gel: 0, goblin_cloth: 0, iron_ore: 0, bone: 0,
         volcano_stone: 0, dragon_scale: 0, refined_iron: 0
     };
+    let inventory = JSON.parse(JSON.stringify(defaultInventory));
 
     const itemNames = {
         slime_gel: "💧 史莱姆粘液", goblin_cloth: "📜 哥布林布片", iron_ore: "🪨 铁矿石",
@@ -291,7 +307,7 @@
         refined_iron: "🧱 精炼铁块"
     };
 
-    // 天气系统参数
+    // 天气机制定义
     const weatherList = [
         { id: "clear", name: "☀️ 晴空", desc: "标准战斗环境，无额外效果。" },
         { id: "rain", name: "🌧️ 暴风雨", desc: "视线变差，双方伤害小幅浮动下降 20%。" },
@@ -310,6 +326,7 @@
         bagHistory: new Set(["小型生命药水"])
     };
 
+    // 区域与怪物数据表
     const regions = [
         {
             name: "【危险度:低】静谧郊野",
@@ -345,6 +362,7 @@
         }
     ];
 
+    // 炼金合成配方表
     const craftRecipes = [
         { id: "potion_large", name: "🧪 大特效药水 x2", materials: { slime_gel: 3 }, type: "item", target: "potionsLarge", amount: 2 },
         { id: "slime_armor", name: "🛡️ 粘液防护服 (防御+6)", materials: { slime_gel: 5 }, type: "armor", stat: 6 },
@@ -361,6 +379,9 @@
     let timer = null;
     let attackTurnCount = 0;
 
+    // -------------------------------------------------------------
+    // 2. 数据持久化逻辑 (写盘/读盘/防版本覆写重置)
+    // -------------------------------------------------------------
     function saveGame() {
         let saveData = {
             player, inventory, skills, autoCraftSettings,
@@ -375,22 +396,30 @@
         localStorage.setItem("rpg_save_v8", JSON.stringify(saveData));
     }
 
+    // 【新增核心保护】版本更新无缝兼容读取（防止新代码重置存档）
     function loadGame() {
         let data = localStorage.getItem("rpg_save_v8");
         if (data) {
-            let parsed = JSON.parse(data);
-            player = parsed.player;
-            inventory = parsed.inventory;
-            skills = parsed.skills || skills;
-            autoCraftSettings = parsed.autoCraftSettings || {};
-            if (parsed.codexData) {
-                codexData.monsters = new Set(parsed.codexData.monsters || []);
-                codexData.equips = new Set(parsed.codexData.equips || []);
-                codexData.materials = new Set(parsed.codexData.materials || []);
-                codexData.crafts = new Set(parsed.codexData.crafts || []);
-                codexData.bagHistory = new Set(parsed.codexData.bagHistory || []);
+            try {
+                let parsed = JSON.parse(data);
+                
+                // 使用对象合并，保证新版本追加的属性/技能/材料字段不会丢失
+                player = Object.assign({}, defaultPlayer, parsed.player || {});
+                inventory = Object.assign({}, defaultInventory, parsed.inventory || {});
+                skills = Object.assign({}, defaultSkills, parsed.skills || {});
+                autoCraftSettings = parsed.autoCraftSettings || {};
+
+                if (parsed.codexData) {
+                    codexData.monsters = new Set(parsed.codexData.monsters || []);
+                    codexData.equips = new Set(parsed.codexData.equips || []);
+                    codexData.materials = new Set(parsed.codexData.materials || []);
+                    codexData.crafts = new Set(parsed.codexData.crafts || []);
+                    codexData.bagHistory = new Set(parsed.codexData.bagHistory || []);
+                }
+                addLog(`💾 自动加载本地进度成功！(已完成旧版本数据安全迁移)`);
+            } catch (e) {
+                console.error("存档解析失败，恢复初始设置", e);
             }
-            addLog(`💾 自动加载本地进度成功！`);
         }
     }
 
@@ -401,58 +430,42 @@
         }
     }
 
-    function switchTab(tabName) {
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-        
-        event.target.classList.add('active');
-        document.getElementById(`tab-${tabName}`).classList.add('active');
-    }
+    // -------------------------------------------------------------
+    // 3. 战斗与遭遇算法 (降低 BOSS 遇敌率)
+    // -------------------------------------------------------------
+    // 【核心改进】生成怪物机制：将 BOSS 遭遇概率压低至 5%
+    function spawnMonster() {
+        let currRegIndex = player.currentRegion;
+        let regionMonsters = regions[currRegIndex].monsters;
 
-    function changeRegion() {
-        let select = document.getElementById("region-select");
-        player.currentRegion = parseInt(select.value);
-        currentMonster = null;
-        addLog(`🗺️ 转移探索地区至：<span class="highlight">${regions[player.currentRegion].name}</span>`);
-        saveGame();
-    }
+        // 分离普通怪与 BOSS
+        let normalMonsters = regionMonsters.filter(m => !m.isBoss);
+        let bossMonsters = regionMonsters.filter(m => m.isBoss);
 
-    function getCurrentBagCount() {
-        let count = 0;
-        if (player.potionsSmall > 0) count++;
-        if (player.potionsLarge > 0) count++;
-        for (let key in inventory) {
-            if (inventory[key] > 0) count++;
+        // 如果包含跨低级区域机制，混入低级普通怪
+        if (currRegIndex > 0 && Math.random() < 0.25) {
+            let prevRegIndex = Math.floor(Math.random() * currRegIndex);
+            normalMonsters = normalMonsters.concat(regions[prevRegIndex].monsters.filter(m => !m.isBoss));
         }
-        return count;
-    }
 
-    function toggleAutoBattle() {
-        isAuto = !isAuto;
-        const btn = document.getElementById("toggle-btn");
-        if (isAuto) {
-            btn.innerText = "暂停自动挂机";
-            btn.classList.add("active");
-            gameLoop();
+        let base = null;
+        // 只有 5% 的低概率才会遭遇该区域的 BOSS
+        if (bossMonsters.length > 0 && Math.random() < 0.05) {
+            base = bossMonsters[Math.floor(Math.random() * bossMonsters.length)];
+            addLog(`<span class="death">⚠️ 警报！你踏入了危险领地，遇到了顶级 BOSS !</span>`);
         } else {
-            btn.innerText = "开始挂机探索";
-            btn.classList.remove("active");
-            clearTimeout(timer);
+            base = normalMonsters[Math.floor(Math.random() * normalMonsters.length)];
         }
+        
+        currentMonster = {
+            name: base.name, maxHp: base.hp, hp: base.hp, atk: base.atk,
+            exp: base.exp, gold: base.gold, drop: base.drop, isBoss: base.isBoss || false
+        };
+        addLog(`遭遇了 <span class="highlight">${currentMonster.name}</span> !`);
+        updateUI();
     }
 
-    // 随机天气变幻机制
-    function checkWeatherChange() {
-        weatherTurnCounter++;
-        if (weatherTurnCounter >= 12) {
-            weatherTurnCounter = 0;
-            if (Math.random() < 0.6) {
-                currentWeather = weatherList[Math.floor(Math.random() * weatherList.length)];
-                addLog(`<span class="weather">🌧️ 区域天气发生改变：【${currentWeather.name}】(${currentWeather.desc})</span>`);
-            }
-        }
-    }
-
+    // 挂机与主战斗循环
     function gameLoop() {
         if (!isAuto) return;
 
@@ -465,7 +478,7 @@
             return;
         }
 
-        // 自动使用药水
+        // 自动战术恢复 (血量低于 45% 使用药水)
         if (player.hp < player.maxHp * 0.45) {
             if (player.potionsLarge > 0) {
                 player.potionsLarge--;
@@ -478,8 +491,10 @@
             }
         }
 
+        // 魔宠每轮辅助
         if (player.currentPet.type === 'heal') player.hp = Math.min(player.maxHp, player.hp + player.currentPet.val);
 
+        // 伤害计算逻辑
         let totalAtk = player.atk + player.currentWeapon.stat + (player.currentPet.type === 'atk' ? player.currentPet.val : 0);
         let totalCrit = player.critRate + (player.currentPet.type === 'crit' ? player.currentPet.val : 0) + (skills.lucky_star ? 8 : 0);
 
@@ -490,17 +505,18 @@
         let damageToMonster = totalAtk;
         if (isHeavyStrike) damageToMonster *= 2.0;
         if (isCrit) damageToMonster *= 1.8;
-        if (currentWeather.id === "rain") damageToMonster *= 0.8; // 暴风雨下降伤害
+        if (currentWeather.id === "rain") damageToMonster *= 0.8;
 
         damageToMonster = Math.floor(damageToMonster);
         currentMonster.hp -= damageToMonster;
 
-        // 汲血技能触发
+        // 汲血技能逻辑
         if (skills.vampire > 0) {
             let healAmt = Math.floor(damageToMonster * 0.1);
             player.hp = Math.min(player.maxHp, player.hp + healAmt);
         }
 
+        // 结算：怪物阵亡
         if (currentMonster.hp <= 0) {
             currentMonster.hp = 0;
             updateUI();
@@ -515,7 +531,7 @@
             player.gold += gainGold;
             player.kills++;
 
-            // 掉率判定（幸运星技能 & 浓雾天气加成）
+            // 掉率与拾取逻辑
             let dropRate = 0.75 + (skills.lucky_star ? 0.15 : 0);
             if (currentMonster.drop && Math.random() < dropRate) {
                 if (getCurrentBagCount() < player.maxBagCapacity || inventory[currentMonster.drop] > 0) {
@@ -537,6 +553,7 @@
             saveGame();
             timer = setTimeout(gameLoop, 1000);
         } else {
+            // 怪物回击玩家
             let totalDef = player.def + player.currentArmor.stat;
             let mAtk = currentMonster.atk * (currentWeather.id === "bloodmoon" ? 1.5 : 1.0);
             let damage = Math.max(1, Math.floor(mAtk - totalDef));
@@ -545,6 +562,7 @@
             if (isHeavyStrike) addLog(`<span class="crit">⚡ 触发【重击】！造成 ${damageToMonster} 伤害！</span>`);
             else if (isCrit) addLog(`<span class="crit">💥 触发暴击！造成 ${damageToMonster} 伤害！</span>`);
 
+            // 玩家阵亡惩罚
             if (player.hp <= 0) {
                 applyDeathPenalty();
                 currentMonster = null;
@@ -557,6 +575,7 @@
         updateUI();
     }
 
+    // 死亡惩罚逻辑
     function applyDeathPenalty() {
         player.hp = player.maxHp;
         player.deaths++;
@@ -585,6 +604,7 @@
         addLog(deathLog);
     }
 
+    // 装备随机掉落算式
     function dropRandomEquipment(isBoss) {
         let isWeapon = Math.random() > 0.5;
         let baseStat = (player.currentRegion + 1) * 12;
@@ -613,23 +633,18 @@
         }
     }
 
-    function spawnMonster() {
-        let currRegIndex = player.currentRegion;
-        let targetMonsters = [...regions[currRegIndex].monsters];
-
-        if (currRegIndex > 0 && Math.random() < 0.25) {
-            let prevRegIndex = Math.floor(Math.random() * currRegIndex);
-            targetMonsters = targetMonsters.concat(regions[prevRegIndex].monsters.filter(m => !m.isBoss));
+    // -------------------------------------------------------------
+    // 4. 环境与系统辅助函数 (技能/炼金/商店/天气的执行函数)
+    // -------------------------------------------------------------
+    function checkWeatherChange() {
+        weatherTurnCounter++;
+        if (weatherTurnCounter >= 12) {
+            weatherTurnCounter = 0;
+            if (Math.random() < 0.6) {
+                currentWeather = weatherList[Math.floor(Math.random() * weatherList.length)];
+                addLog(`<span class="weather">🌧️ 区域天气发生改变：【${currentWeather.name}】(${currentWeather.desc})</span>`);
+            }
         }
-
-        let base = targetMonsters[Math.floor(Math.random() * targetMonsters.length)];
-        
-        currentMonster = {
-            name: base.name, maxHp: base.hp, hp: base.hp, atk: base.atk,
-            exp: base.exp, gold: base.gold, drop: base.drop, isBoss: base.isBoss || false
-        };
-        addLog(`遭遇了 <span class="highlight">${currentMonster.name}</span> !`);
-        updateUI();
     }
 
     function learnSkill(skillId) {
@@ -765,7 +780,7 @@
     function checkLevelUp() {
         if (player.exp >= player.maxExp) {
             player.level++;
-            player.sp++; // 升级赠送 1 点技能点
+            player.sp++;
             player.exp -= player.maxExp;
             player.maxExp = Math.floor(player.maxExp * 1.5);
             player.maxHp += 30;
@@ -776,6 +791,49 @@
         }
     }
 
+    function getCurrentBagCount() {
+        let count = 0;
+        if (player.potionsSmall > 0) count++;
+        if (player.potionsLarge > 0) count++;
+        for (let key in inventory) {
+            if (inventory[key] > 0) count++;
+        }
+        return count;
+    }
+
+    function toggleAutoBattle() {
+        isAuto = !isAuto;
+        const btn = document.getElementById("toggle-btn");
+        if (isAuto) {
+            btn.innerText = "暂停自动挂机";
+            btn.classList.add("active");
+            gameLoop();
+        } else {
+            btn.innerText = "开始挂机探索";
+            btn.classList.remove("active");
+            clearTimeout(timer);
+        }
+    }
+
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        
+        event.target.classList.add('active');
+        document.getElementById(`tab-${tabName}`).classList.add('active');
+    }
+
+    function changeRegion() {
+        let select = document.getElementById("region-select");
+        player.currentRegion = parseInt(select.value);
+        currentMonster = null;
+        addLog(`🗺️ 转移探索地区至：<span class="highlight">${regions[player.currentRegion].name}</span>`);
+        saveGame();
+    }
+
+    // -------------------------------------------------------------
+    // 5. 视图渲染与 UI 更新 (UI 响应与状态同步)
+    // -------------------------------------------------------------
     function updateUI() {
         document.getElementById("player-level").innerText = `Lv.${player.level}`;
         document.getElementById("player-atk").innerText = player.atk + player.currentWeapon.stat + (player.currentPet.type === 'atk' ? player.currentPet.val : 0);
@@ -939,6 +997,7 @@
         logBox.insertBefore(logItem, logBox.firstChild);
     }
 
+    // 初始化程序入口
     loadGame();
     updateUI();
 </script>
