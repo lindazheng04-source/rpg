@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>异世界地下城挂机录 - Text RPG</title>
+    <style>
+        :root {
+            --bg-color: #121319;
+            --card-bg: #1c1d26;
+            --primary: #9d8ec7;
+            --accent: #ff79c6;
+            --text: #e0e0e0;
+            --subtext: #9090a0;
+            --border: #2e303e;
+            --hp-color: #ff5555;
+            --exp-color: #50fa7b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', "Microsoft YaHei", sans-serif; }
+        body { background: var(--bg-color); color: var(--text); padding: 20px; display: flex; justify-content: center; }
+        .game-container { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 15px; }
+
+        /* 卡片通用样式 */
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .title { color: var(--accent); font-size: 1.1rem; font-weight: bold; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+
+        /* 属性面板 */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.9rem; margin-bottom: 10px; }
+        .bar-container { background: #000; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 4px; }
+        .bar-fill { height: 100%; transition: width 0.3s ease; }
+
+        /* 战斗展示 */
+        .battle-zone { text-align: center; padding: 20px 10px; }
+        .monster-name { font-size: 1.3rem; color: #ffb86c; font-weight: bold; margin-bottom: 5px; }
+        .monster-hp { font-size: 0.85rem; color: var(--subtext); }
+
+        /* 装备面板 */
+        .equip-box { font-size: 0.85rem; color: var(--subtext); line-height: 1.6; }
+        .equip-name { color: var(--primary); font-weight: bold; }
+
+        /* 挂机控制按钮 */
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; background: var(--primary); color: #fff; font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn:hover { opacity: 0.9; }
+        .btn.active { background: var(--hp-color); }
+
+        /* 日志区域 */
+        .log-box { height: 180px; overflow-y: auto; font-size: 0.85rem; display: flex; flex-direction: column-reverse; gap: 6px; }
+        .log-item { color: var(--subtext); border-bottom: 1px solid #222430; padding-bottom: 4px; }
+        .log-item .highlight { color: var(--accent); }
+        .log-item .gain { color: var(--exp-color); }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div class="card">
+        <div class="title">
+            <span>⚔️ 冒险者状态</span>
+            <span id="player-level" style="font-size: 0.9rem; color: var(--primary);">Lv.1</span>
+        </div>
+        <div class="stats-grid">
+            <div>攻击: <span id="player-atk">10</span></div>
+            <div>防御: <span id="player-def">2</span></div>
+            <div>击杀数: <span id="player-kills">0</span></div>
+            <div>金币: <span id="player-gold">0</span></div>
+        </div>
+        <div>
+            <div style="font-size: 0.8rem; display: flex; justify-content: space-between;">
+                <span>生命值</span>
+                <span id="hp-text">100/100</span>
+            </div>
+            <div class="bar-container"><div id="hp-bar" class="bar-fill" style="background: var(--hp-color); width: 100%;"></div></div>
+        </div>
+        <div style="margin-top: 8px;">
+            <div style="font-size: 0.8rem; display: flex; justify-content: space-between;">
+                <span>经验值</span>
+                <span id="exp-text">0/50</span>
+            </div>
+            <div class="bar-container"><div id="exp-bar" class="bar-fill" style="background: var(--exp-color); width: 0%;"></div></div>
+        </div>
+    </div>
+
+    /* 装备面板 */
+    <div class="card">
+        <div class="title">🗡️ 当前装备</div>
+        <div class="equip-box">
+            武器：<span id="weapon-name" class="equip-name">新手木剑</span> (+<span id="weapon-atk">2</span> 攻击)<br>
+            防具：<span id="armor-name" class="equip-name">布衣</span> (+<span id="armor-def">1</span> 防御)
+        </div>
+    </div>
+
+    <div class="card battle-zone">
+        <div class="monster-name" id="monster-name">寻找魔物中...</div>
+        <div class="monster-hp" id="monster-hp-text">HP: -/-</div>
+        <div class="bar-container" style="margin-top: 8px;">
+            <div id="monster-hp-bar" class="bar-fill" style="background: var(--accent); width: 0%;"></div>
+        </div>
+    </div>
+
+    <button id="toggle-btn" class="btn" onclick="toggleAutoBattle()">开始挂机探索</button>
+
+    <div class="card">
+        <div class="title">📜 冒險日志</div>
+        <div class="log-box" id="log-box">
+            <div class="log-item">准备就绪，点击按钮开始在地下城挂机...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 玩家数据
+    let player = {
+        level: 1, hp: 100, maxHp: 100, atk: 8, def: 2, exp: 0, maxExp: 50, gold: 0, kills: 0,
+        weaponAtk: 2, armorDef: 1
+    };
+
+    // 怪物数据库（二次元/日式风格）
+    const monsters = [
+        { name: "史莱姆", hp: 30, atk: 5, exp: 15, gold: 5 },
+        { name: "迷失的哥布林", hp: 50, atk: 9, exp: 25, gold: 12 },
+        { name: "疯狂的野花妖", hp: 80, atk: 14, exp: 40, gold: 20 },
+        { name: "洞窟毒蜘蛛", hp: 130, atk: 22, exp: 65, gold: 35 },
+        { name: "地下城骷髅兵", hp: 200, atk: 32, exp: 100, gold: 50 },
+        { name: "暗黑魔法使", hp: 320, atk: 48, exp: 160, gold: 80 }
+    ];
+
+    // 装备掉落库
+    const weaponNames = ["铁剑", "钢制长剑", "精灵之刃", "屠龙大剑", "圣光符文剑"];
+    const armorNames = ["皮甲", "锁子甲", "骑士重铠", "龙鳞铠甲", "圣者法袍"];
+
+    let currentMonster = null;
+    let isAuto = false;
+    let timer = null;
+
+    // 挂机开关
+    function toggleAutoBattle() {
+        isAuto = !isAuto;
+        const btn = document.getElementById("toggle-btn");
+        if (isAuto) {
+            btn.innerText = "暂停自动挂机";
+            btn.classList.add("active");
+            gameLoop();
+        } else {
+            btn.innerText = "开始挂机探索";
+            btn.classList.remove("active");
+            clearTimeout(timer);
+        }
+    }
+
+    // 主游戏循环
+    function gameLoop() {
+        if (!isAuto) return;
+
+        // 如果没有怪物，生成一只
+        if (!currentMonster || currentMonster.hp <= 0) {
+            spawnMonster();
+            timer = setTimeout(gameLoop, 1000);
+            return;
+        }
+
+        // 玩家攻击
+        let playerTotalAtk = player.atk + player.weaponAtk;
+        let damageToMonster = Math.max(1, playerTotalAtk);
+        currentMonster.hp -= damageToMonster;
+        
+        if (currentMonster.hp <= 0) {
+            currentMonster.hp = 0;
+            updateUI();
+            addLog(`击败了 <span class="highlight">${currentMonster.name}</span>！获得 <span class="gain">${currentMonster.exp} 经验</span>，<span class="gain">${currentMonster.gold} 金币</span>。`);
+            
+            // 结算奖励
+            player.exp += currentMonster.exp;
+            player.gold += currentMonster.gold;
+            player.kills++;
+            
+            // 随机装备掉落 (15% 概率)
+            if (Math.random() < 0.15) {
+                dropEquipment();
+            }
+
+            checkLevelUp();
+            currentMonster = null;
+            // 击杀后自然回满血
+            player.hp = player.maxHp;
+            timer = setTimeout(gameLoop, 1200);
+        } else {
+            // 怪物反击
+            let damageToPlayer = Math.max(1, currentMonster.atk - (player.def + player.armorDef));
+            player.hp -= damageToPlayer;
+
+            if (player.hp <= 0) {
+                player.hp = player.maxHp;
+                addLog(`<span style="color:var(--hp-color)">倒下了！被迫返回营地休息，失去部分挂机节奏...</span>`);
+                currentMonster = null;
+                timer = setTimeout(gameLoop, 2500); // 战败惩罚：等待更长时间
+            } else {
+                timer = setTimeout(gameLoop, 800);
+            }
+        }
+        updateUI();
+    }
+
+    // 生成怪物
+    function spawnMonster() {
+        // 根据玩家等级动态选取怪物类型
+        let maxIndex = Math.min(Math.floor(player.level / 2), monsters.length - 1);
+        let base = monsters[Math.floor(Math.random() * (maxIndex + 1))];
+        
+        // 数值随玩家等级小幅浮动
+        currentMonster = {
+            name: base.name,
+            maxHp: Math.floor(base.hp * (1 + player.level * 0.1)),
+            hp: Math.floor(base.hp * (1 + player.level * 0.1)),
+            atk: Math.floor(base.atk * (1 + player.level * 0.1)),
+            exp: Math.floor(base.exp * (1 + player.level * 0.05)),
+            gold: Math.floor(base.gold * (1 + player.level * 0.05))
+        };
+        addLog(`遭遇了 <span class="highlight">${currentMonster.name}</span> !`);
+        updateUI();
+    }
+
+    // 升级检查
+    function checkLevelUp() {
+        if (player.exp >= player.maxExp) {
+            player.level++;
+            player.exp -= player.maxExp;
+            player.maxExp = Math.floor(player.maxExp * 1.5);
+            player.maxHp += 20;
+            player.hp = player.maxHp;
+            player.atk += 3;
+            player.def += 1;
+            addLog(`🎉 <span class="gain">等级提升至 Lv.${player.level}！属性大幅增加！</span>`);
+        }
+    }
+
+    // 掉落装备
+    function dropEquipment() {
+        let isWeapon = Math.random() > 0.5;
+        if (isWeapon) {
+            let newAtk = player.weaponAtk + Math.floor(Math.random() * 3) + 1;
+            if (newAtk > player.weaponAtk) {
+                player.weaponAtk = newAtk;
+                let name = weaponNames[Math.min(Math.floor(newAtk / 4), weaponNames.length - 1)];
+                document.getElementById("weapon-name").innerText = name;
+                document.getElementById("weapon-atk").innerText = newAtk;
+                addLog(`✨ 掉落并装备了新武器 <span class="highlight">${name}</span> (攻击+${newAtk})！`);
+            }
+        } else {
+            let newDef = player.armorDef + Math.floor(Math.random() * 2) + 1;
+            if (newDef > player.armorDef) {
+                player.armorDef = newDef;
+                let name = armorNames[Math.min(Math.floor(newDef / 3), armorNames.length - 1)];
+                document.getElementById("armor-name").innerText = name;
+                document.getElementById("armor-def").innerText = newDef;
+                addLog(`🛡️ 掉落并装备了新防具 <span class="highlight">${name}</span> (防御+${newDef})！`);
+            }
+        }
+    }
+
+    // UI 刷新
+    function updateUI() {
+        document.getElementById("player-level").innerText = `Lv.${player.level}`;
+        document.getElementById("player-atk").innerText = player.atk + player.weaponAtk;
+        document.getElementById("player-def").innerText = player.def + player.armorDef;
+        document.getElementById("player-kills").innerText = player.kills;
+        document.getElementById("player-gold").innerText = player.gold;
+
+        document.getElementById("hp-text").innerText = `${Math.max(0, player.hp)}/${player.maxHp}`;
+        document.getElementById("hp-bar").style.width = `${(Math.max(0, player.hp) / player.maxHp) * 100}%`;
+
+        document.getElementById("exp-text").innerText = `${player.exp}/${player.maxExp}`;
+        document.getElementById("exp-bar").style.width = `${(player.exp / player.maxExp) * 100}%`;
+
+        if (currentMonster) {
+            document.getElementById("monster-name").innerText = currentMonster.name;
+            document.getElementById("monster-hp-text").innerText = `HP: ${Math.max(0, currentMonster.hp)}/${currentMonster.maxHp}`;
+            document.getElementById("monster-hp-bar").style.width = `${(Math.max(0, currentMonster.hp) / currentMonster.maxHp) * 100}%`;
+        } else {
+            document.getElementById("monster-name").innerText = "寻找魔物中...";
+            document.getElementById("monster-hp-text").innerText = `HP: -/-`;
+            document.getElementById("monster-hp-bar").style.width = `0%`;
+        }
+    }
+
+    // 增加日志
+    function addLog(text) {
+        const logBox = document.getElementById("log-box");
+        const logItem = document.createElement("div");
+        logItem.className = "log-item";
+        logItem.innerHTML = `> ${text}`;
+        logBox.insertBefore(logItem, logBox.firstChild);
+    }
+</script>
+</body>
+</html>
