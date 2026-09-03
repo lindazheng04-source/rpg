@@ -53,8 +53,9 @@
         
         button { background: #444; color: #fff; border: 1px solid #555; padding: 6px 12px; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 4px; }
         button:hover { background: #555; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
         button.active { background: #c62828; }
-        .btn-sm { width: auto; padding: 2px 8px; font-size: 0.75rem; }
+        .btn-sm { width: auto; padding: 2px 8px; font-size: 0.75rem; margin-top: 0; }
         .btn-off { background: #222; color: #666; border-color: #333; }
         
         .item-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px dashed #333; }
@@ -69,6 +70,7 @@
         .crit { color: #ff5722; font-weight: bold; }
         .death { color: #ef5350; font-weight: bold; }
         .gain { color: #66bb6a; }
+        .rare { color: #ab47bc; font-weight: bold; }
         .weather { color: #29b6f6; }
     </style>
 </head>
@@ -138,7 +140,7 @@
             </div>
         </div>
 
-        <button id="toggle-btn" onclick="toggleAutoBattle()">开始挂机探索</button>
+        <button id="toggle-btn" type="button" onclick="toggleAutoBattle()">开始挂机探索</button>
     </div>
 
     <!-- 战报日志 -->
@@ -149,11 +151,11 @@
 
     <!-- 底部 Tab 选项卡导航 -->
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('bag')">🎒 背包</button>
-        <button class="tab-btn" onclick="switchTab('craft')">🧪 炼金</button>
-        <button class="tab-btn" onclick="switchTab('skills')">⚡ 技能</button>
-        <button class="tab-btn" onclick="switchTab('shop')">🛒 商店</button>
-        <button class="tab-btn" onclick="switchTab('codex')">📖 图鉴</button>
+        <button type="button" class="tab-btn active" onclick="switchTab('bag', this)">🎒 背包</button>
+        <button type="button" class="tab-btn" onclick="switchTab('craft', this)">🧪 炼金</button>
+        <button type="button" class="tab-btn" onclick="switchTab('skills', this)">⚡ 技能</button>
+        <button type="button" class="tab-btn" onclick="switchTab('shop', this)">🛒 商店</button>
+        <button type="button" class="tab-btn" onclick="switchTab('codex', this)">📖 图鉴</button>
     </div>
 
     <!-- TAB 1: 背包 -->
@@ -178,56 +180,56 @@
                 <div>🧪 小型生命药水</div>
                 <div class="item-desc">恢复 50 点 HP</div>
             </div>
-            <button class="btn-sm" onclick="buyPotion('small', 1, 15)">购买 (15💰)</button>
+            <button type="button" class="btn-sm" onclick="buyPotion('small', 1, 15)">购买 (15💰)</button>
         </div>
         <div class="item-row">
             <div>
                 <div>🧪 大特效药水</div>
                 <div class="item-desc">恢复 180 点 HP</div>
             </div>
-            <button class="btn-sm" onclick="buyPotion('large', 1, 50)">购买 (50💰)</button>
+            <button type="button" class="btn-sm" onclick="buyPotion('large', 1, 50)">购买 (50💰)</button>
         </div>
         <div class="item-row">
             <div>
                 <div>🎒 扩容背包 (+5格)</div>
                 <div class="item-desc">扩大物品储存上限</div>
             </div>
-            <button id="btn-bag-1" class="btn-sm" onclick="buyBagUpgrade(1, 150, 5)">购买 (150💰)</button>
+            <button id="btn-bag-1" type="button" class="btn-sm" onclick="buyBagUpgrade(1, 150, 5)">购买 (150💰)</button>
         </div>
         <div class="item-row">
             <div>
                 <div>🎒 高级旅行背包 (+10格)</div>
                 <div class="item-desc">大幅拓展储存上限</div>
             </div>
-            <button id="btn-bag-2" class="btn-sm" onclick="buyBagUpgrade(2, 500, 10)">购买 (500💰)</button>
+            <button id="btn-bag-2" type="button" class="btn-sm" onclick="buyBagUpgrade(2, 500, 10)">购买 (500💰)</button>
         </div>
         <div class="item-row">
             <div>
                 <div>⚡ 狂暴药剂</div>
                 <div class="item-desc">永久提升 5% 暴击率</div>
             </div>
-            <button class="btn-sm" onclick="buyElixir('crit', 300)">购买 (300💰)</button>
+            <button type="button" class="btn-sm" onclick="buyElixir('crit', 300)">购买 (300💰)</button>
         </div>
         <div class="item-row">
             <div>
                 <div>🐾 契约：精灵史莱姆</div>
                 <div class="item-desc">每轮回复 8 点 HP (战败会阵亡)</div>
             </div>
-            <button class="btn-sm" onclick="adoptPet('精灵史莱姆', 'heal', 8, 200)">签约 (200💰)</button>
+            <button type="button" class="btn-sm" onclick="adoptPet('精灵史莱姆', 'heal', 8, 200)">签约 (200💰)</button>
         </div>
         <div class="item-row">
             <div>
                 <div>🐾 契约：寻宝狐狸</div>
                 <div class="item-desc">提升 8% 暴击率 (战败会阵亡)</div>
             </div>
-            <button class="btn-sm" onclick="adoptPet('寻宝狐狸', 'crit', 8, 350)">签约 (350💰)</button>
+            <button type="button" class="btn-sm" onclick="adoptPet('寻宝狐狸', 'crit', 8, 350)">签约 (350💰)</button>
         </div>
         <div class="item-row">
             <div>
                 <div>🐾 契约：小幼龙</div>
                 <div class="item-desc">增加 15 点基础攻击力 (战败会阵亡)</div>
             </div>
-            <button class="btn-sm" onclick="adoptPet('小幼龙', 'atk', 15, 600)">签约 (600💰)</button>
+            <button type="button" class="btn-sm" onclick="adoptPet('小幼龙', 'atk', 15, 600)">签约 (600💰)</button>
         </div>
     </div>
 
@@ -248,7 +250,7 @@
         <div class="title" style="font-size:0.8rem;">🎒 道具使用历史</div>
         <div id="codex-bag-history" class="codex-grid"></div>
 
-        <button onclick="resetSave()" style="margin-top:15px; background:#b71c1c;">⚠️ 清空并重置游戏数据</button>
+        <button type="button" onclick="resetSave()" style="margin-top:15px; background:#b71c1c;">⚠️ 清空并重置游戏数据</button>
     </div>
 </div>
 
@@ -256,7 +258,6 @@
     // -------------------------------------------------------------
     // 0. 通用工具函数
     // -------------------------------------------------------------
-    // 生成 [min, max] 之间的随机整数
     function getRandomInt(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
@@ -315,7 +316,6 @@
         bagHistory: new Set(["小型生命药水"])
     };
 
-    // 区域与怪物基准数据表
     const regions = [
         {
             name: "【危险度:低】静谧郊野",
@@ -351,7 +351,6 @@
         }
     ];
 
-    // 炼金合成配方表 (已移除了需精炼铁块制作的装备)
     const craftRecipes = [
         { id: "potion_large", name: "🧪 大特效药水 x2", materials: { slime_gel: 3 }, type: "item", target: "potionsLarge", amount: 2 },
         { id: "refined_iron", name: "🧱 精炼铁块", materials: { iron_ore: 3 }, type: "mat", target: "refined_iron", amount: 1 },
@@ -364,7 +363,6 @@
     let timer = null;
     let attackTurnCount = 0;
 
-    // 各材料的出售单价配置
     const itemPrices = {
          slime_gel: 2,
          goblin_cloth: 5,
@@ -385,7 +383,7 @@
              updateUI();
          }
     }
-    
+
     // -------------------------------------------------------------
     // 2. 数据持久化
     // -------------------------------------------------------------
@@ -435,7 +433,7 @@
     }
 
     // -------------------------------------------------------------
-    // 3. 战斗与动态怪物生成算法 (包含区间数值浮动)
+    // 3. 战斗与动态怪物生成算法
     // -------------------------------------------------------------
     function spawnMonster() {
         let currRegIndex = player.currentRegion;
@@ -457,15 +455,11 @@
             base = normalMonsters[Math.floor(Math.random() * normalMonsters.length)];
         }
 
-        // --- 数值区间浮动逻辑 ---
-        // HP 与 攻击力在 ±15% 间随机浮动
         let hpFluct = getRandomInt(Math.floor(base.hp * 0.85), Math.ceil(base.hp * 1.15));
         let atkFluct = getRandomInt(Math.floor(base.atk * 0.85), Math.ceil(base.atk * 1.15));
-        // 经验(±10%)与金币(±20%)浮动
         let expFluct = getRandomInt(Math.floor(base.exp * 0.9), Math.ceil(base.exp * 1.1));
         let goldFluct = Math.floor(getRandomInt(Math.floor(base.gold * 0.8), Math.ceil(base.gold * 1.2)));
 
-        // 掉落物品类型动态浮动（80% 掉落专属材料，20% 掉落杂物/通用材料）
         let dropItem = base.drop;
         if (base.drop && Math.random() < 0.2) {
             let randomMatPool = ["slime_gel", "goblin_cloth", "iron_ore"];
@@ -499,7 +493,6 @@
             return;
         }
 
-        // 自动使用药水
         if (player.hp < player.maxHp * 0.45) {
             if (player.potionsLarge > 0) {
                 player.potionsLarge--;
@@ -708,7 +701,7 @@
         }
 
         if (autoCraftSettings[recipeId] === undefined) {
-            autoCraftSettings[recipeId] = true;
+            autoCraftSettings[recipeId] = false;
         }
         codexData.crafts.add(recipe.name);
 
@@ -828,12 +821,13 @@
         }
     }
 
-    function switchTab(tabName) {
+    function switchTab(tabName, el) {
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
         
-        event.target.classList.add('active');
-        document.getElementById(`tab-${tabName}`).classList.add('active');
+        if (el) el.classList.add('active');
+        const targetTab = document.getElementById(`tab-${tabName}`);
+        if (targetTab) targetTab.classList.add('active');
     }
 
     function changeRegion() {
@@ -870,7 +864,6 @@
         document.getElementById("equip-armor-stat").innerText = `防御 +${player.currentArmor.stat}`;
         document.getElementById("equip-pet-name").innerText = player.currentPet.name;
 
-        // 动态刷新魔宠描述
         let petStatText = "无加成";
         if (player.currentPet.type === 'heal') petStatText = `每轮恢复 ${player.currentPet.val} HP`;
         else if (player.currentPet.type === 'crit') petStatText = `暴击率 +${player.currentPet.val}%`;
@@ -912,7 +905,7 @@
                         <div>${itemNames[key]} <span class="item-desc">(单价: ${price}💰)</span></div>
                         <div class="btn-group" style="align-items:center;">
                             <span style="margin-right:8px;">x${inventory[key]}</span>
-                            <button class="btn-sm" onclick="sellItem('${key}')">出售 1 个</button>
+                            <button type="button" class="btn-sm" onclick="sellItem('${key}')">出售 1 个</button>
                         </div>
                     </div>`;
             }
@@ -936,7 +929,7 @@
                         <div>${s.name} ${learned ? '<span style="color:var(--exp-color); font-size:0.7rem;">[已学会]</span>' : ''}</div>
                         <div class="item-desc">${s.desc}</div>
                     </div>
-                    <button class="btn-sm ${learned ? 'btn-off' : ''}" onclick="learnSkill('${s.id}')">
+                    <button type="button" class="btn-sm ${learned ? 'btn-off' : ''}" onclick="learnSkill('${s.id}')">
                         ${learned ? '已掌握' : '学习 (1 SP)'}
                     </button>
                 </div>
@@ -959,8 +952,8 @@
                         <div class="item-desc">需要：${reqText}</div>
                     </div>
                     <div class="btn-group">
-                        <button class="btn-sm" onclick="manualCraft('${r.id}')">手动合成</button>
-                        <button class="btn-sm ${isAutoOn ? '' : 'btn-off'}" onclick="toggleAutoCraftSetting('${r.id}')">
+                        <button type="button" class="btn-sm" onclick="manualCraft('${r.id}')">手动合成</button>
+                        <button type="button" class="btn-sm ${isAutoOn ? '' : 'btn-off'}" onclick="toggleAutoCraftSetting('${r.id}')">
                             ${isAutoOn ? '自动中' : '已停用'}
                         </button>
                     </div>
@@ -1025,7 +1018,7 @@
         logBox.insertBefore(logItem, logBox.firstChild);
     }
 
-    // 入口：初始化
+    // 初始化入口
     loadGame();
     updateUI();
 </script>
