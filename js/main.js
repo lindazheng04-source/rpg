@@ -1,7 +1,42 @@
-// 定时挂机逻辑与主循环入口
+// 自动进食检测
+function checkAutoEat() {
+  if (!gameState.autoEat) return;
+
+  // 当体力低于 50 时，若身上有食物，自动进食
+  if (gameState.stamina < STAMINA_WARNING_THRESHOLD) {
+    if (gameState.cooked > 0) {
+      gameState.cooked -= 1;
+      gameState.stamina = Math.min(100, gameState.stamina + 50);
+      addLog("【自动进食】小精灵有些疲惫，自动吃了一份熟食，恢复了 50 体力。");
+    } else if (gameState.fruit > 0) {
+      gameState.fruit -= 1;
+      gameState.stamina = Math.min(100, gameState.stamina + 15);
+      addLog("【自动进食】小精灵有些疲惫，自动啃了一颗野果，恢复了 15 体力。");
+    }
+  }
+}
+
+// 无动作在家歇息恢复体力
+function checkRestRecovery() {
+  if (gameState.isExploring) return;
+
+  const now = Date.now();
+  // 30 秒（30000 毫秒）内无任何手动操作或处于休息状态，体力 +1
+  if (now - gameState.lastActionTime >= REST_STAMINA_RECOVERY_INTERVAL * 1000) {
+    if (gameState.stamina < 100) {
+      gameState.stamina = Math.min(100, gameState.stamina + 1);
+      // 重置最后操作时间，避免每秒都重复加
+      gameState.lastActionTime = now;
+      updateUI();
+    }
+  }
+}
 
 function autoExploreCheck() {
   if (gameState.isExploring) return;
+
+  // 如果体力低于 20，绝对不触发远足
+  if (gameState.stamina < STAMINA_EXHAUSTED_THRESHOLD) return;
 
   if (gameState.weapon >= 1 && (gameState.fruit >= 2 || gameState.cooked >= 1) && gameState.stamina >= 60) {
     gameState.isExploring = true;
@@ -18,6 +53,7 @@ function autoExploreCheck() {
       gameState.fruit += foundFruit;
       gameState.stamina = Math.max(10, gameState.stamina - 30);
       addLog(`【远足归来】小精灵平安回家！带回了 ${foundStone} 块石头和 ${foundFruit} 颗野果。`);
+      gameState.lastActionTime = Date.now(); // 远足归来重置无动作时间
       updateUI(); saveGame();
     }, 8000);
   }
@@ -56,12 +92,11 @@ function animalVisitCheck() {
 
 function gameLoop() {
   if (!gameState.isExploring) {
-    if (!gameState.rooms.includes("睡房")) {
-      gameState.stamina = Math.max(0, gameState.stamina - 1);
-    }
-    
-    gameState.wood += 1;
-    gameState.grass += 1;
+    // 自动进食检查
+    checkAutoEat();
+
+    // 歇息恢复检查
+    checkRestRecovery();
 
     autoExploreCheck();
     animalVisitCheck();
@@ -74,6 +109,7 @@ function gameLoop() {
 // 页面加载完成后启动
 window.onload = () => {
   loadGame();
+  gameState.lastActionTime = Date.now(); // 初始化动作计时
   updateUI();
-  setInterval(gameLoop, 4000); // 4秒一个 tick
+  setInterval(gameLoop, 2000); // 改为每 2 秒检测一次响应更敏捷
 };
