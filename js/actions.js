@@ -11,12 +11,45 @@ function eatFruit() {
   updateActionTime(); updateUI(); saveGame();
 }
 
+// 恢复：吃肉类
+function eatMeat() {
+  if (gameState.meat < 1) { addLog("没有生肉了。"); return; }
+  if (gameState.stamina >= 100) { addLog("小精灵肚子饱饱的，吃不下了。"); return; }
+  gameState.meat -= 1;
+  gameState.stamina = Math.min(100, gameState.stamina + 25);
+  addLog("你喂小精灵吃了一块风干肉，恢复了 25 点体力！");
+  updateActionTime(); updateUI(); saveGame();
+}
+
 function eatCooked() {
   if (gameState.cooked < 1) { addLog("没有熟食了，去厨房做一份吧！"); return; }
   if (gameState.stamina >= 100) { addLog("小精灵肚子饱饱的，吃不下了。"); return; }
   gameState.cooked -= 1;
   gameState.stamina = Math.min(100, gameState.stamina + 50);
   addLog("你给小精灵端上了一碗香喷喷的热熟食，恢复了 50 点体力！");
+  updateActionTime(); updateUI(); saveGame();
+}
+
+// 恢复：使用药品
+function useMedicine() {
+  if (gameState.medicine < 1) { addLog("没有药品了，请先用草药制药。"); return; }
+  if (gameState.stamina >= 100) { addLog("小精灵精神棒棒的，不需要吃药。"); return; }
+  gameState.medicine -= 1;
+  gameState.stamina = Math.min(100, gameState.stamina + 80);
+  addLog("你喂小精灵服下了草药膏，体力大幅恢复了 80 点！");
+  updateActionTime(); updateUI(); saveGame();
+}
+
+// 恢复：制作药品 (需干草和野果)
+function craftMedicine() {
+  if (gameState.grass < 3 || gameState.fruit < 1) {
+    addLog("制作药品需要 3 份干草和 1 个野果。");
+    return;
+  }
+  gameState.grass -= 3;
+  gameState.fruit -= 1;
+  gameState.medicine += 1;
+  addLog("【玩家制作】你捣碎草药与野果，制作出了一份治疗药品！");
   updateActionTime(); updateUI(); saveGame();
 }
 
@@ -37,7 +70,6 @@ function craftWeapon() {
   updateActionTime(); updateUI(); saveGame();
 }
 
-// 新增：玩家制作/装备背包
 function craftBackpack(type) {
   const spec = backpackSpecs[type];
   if (!spec) return;
@@ -46,11 +78,13 @@ function craftBackpack(type) {
     return;
   }
 
-  if (gameState.wood >= spec.wood && gameState.grass >= spec.grass) {
+  const needMeat = spec.meat || 0;
+  if (gameState.wood >= spec.wood && gameState.grass >= spec.grass && gameState.meat >= needMeat) {
     gameState.wood -= spec.wood;
     gameState.grass -= spec.grass;
+    gameState.meat -= needMeat;
     gameState.backpack = type;
-    addLog(`【制作装备】你成功缝制了【${spec.name}】并给小精灵背上！出远门负重上限提升至 ${spec.capacity} 点。`);
+    addLog(`【制作装备】你缝制了【${spec.name}】给小精灵背上！出远门负重上限提升至 ${spec.capacity} 点。`);
     updateActionTime(); updateUI(); saveGame();
   } else {
     addLog("制作该背包的材料不足。");
@@ -59,15 +93,17 @@ function craftBackpack(type) {
 
 function cookFood() {
   if (!gameState.rooms.includes("厨房")) { addLog("还没有厨房，无法烹饪。请先为小精灵建造厨房。"); return; }
-  if (gameState.fruit < 2) { addLog("野果不够，烹饪需要 2 个野果。"); return; }
+  if (gameState.fruit < 1 || gameState.meat < 1) { addLog("烹饪烤肉果泥需要 1 个野果和 1 份肉类。"); return; }
 
-  gameState.fruit -= 2;
+  gameState.fruit -= 1;
+  gameState.meat -= 1;
+
   const successRate = 0.4 + (gameState.cookExp / 100) * 0.6;
   if (Math.random() < successRate) {
     gameState.cooked += 1;
-    addLog("【玩家烹饪】你成功煮出了一碗热腾腾的烤果泥！");
+    addLog("【玩家烹饪】你成功煮出了一碗香气四溢的烤肉果泥！");
   } else {
-    addLog("【烹饪失败】不小心把果泥煮糊了...不过你的烹饪经验提升了！");
+    addLog("【烹饪失败】不小心把肉煮糊了...不过你的烹饪经验提升了！");
   }
 
   if (gameState.cookExp < 100) {
