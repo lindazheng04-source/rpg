@@ -562,6 +562,8 @@
         let totalCrit = player.critRate + (player.currentPet.type === 'crit' ? player.currentPet.val : 0) + ((skills.lucky_star || 0) * 5);
         
         // 2. 强力重击伤害倍率计算
+        let isCrit = Math.random() * 100 < totalCrit;
+        
         attackTurnCount++;
         let isHeavyStrike = skills.heavy_strike > 0 && (attackTurnCount % 3 === 0);
         let heavyMultiplier = 1.5 + (skills.heavy_strike * 0.5); // Lv1:200%, Lv2:250%...
