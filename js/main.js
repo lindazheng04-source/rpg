@@ -25,7 +25,7 @@ function checkRestRecovery() {
   }
 }
 
-// 核心更新：带武器出门采集“肉类”与“药草”
+// 核心更新：受“背包容量”严格限制的出游与物资收获
 function elfAutoGatherCheck() {
   if (gameState.isExploring) return;
   if (gameState.stamina < 30) return;
@@ -33,65 +33,57 @@ function elfAutoGatherCheck() {
   if (Math.random() < 0.20) {
     gameState.isExploring = true;
 
-    // 是否配备了木棍武器
-    const hasWeapon = gameState.weapon > 0;
-    if (hasWeapon) {
-      addLog("【自主打猎/防身】小精灵背上小木棍，威风凛凛地进山探索了！");
-    } else {
-      addLog("【自主采集】小精灵外出采摘和捡树枝去了...");
+    // 1. 获取背包参数
+    const currentBag = backpackSpecs[gameState.backpack || 'none'];
+    const maxCapacity = currentBag.capacity;
+
+    // 2. 出门前携带干粮与木棍（若有物资，按背包规格携带）
+    let takeLog = "";
+    if (gameState.cooked > 0) {
+      gameState.cooked -= 1;
+      takeLog = "，带上了一份熟食干粮";
+    } else if (gameState.fruit > 0) {
+      gameState.fruit -= 1;
+      takeLog = "，口袋里揣了 1 颗野果";
     }
+
+    if (gameState.weapon > 0 && Math.random() < 0.5) {
+      takeLog += "，手拿小木棍防身";
+    }
+
+    addLog(`【自主远足】小精灵背上【${currentBag.name}】出发了${takeLog}...`);
     updateUI();
 
     setTimeout(() => {
       gameState.isExploring = false;
 
-      const foundWood = Math.floor(Math.random() * 3) + 1;
-      const foundGrass = Math.floor(Math.random() * 3) + 1;
-      const foundStone = Math.floor(Math.random() * 2) + 1;
-      const foundFruit = Math.floor(Math.random() * 2);
-      
-      // 1. 采集药草的概率（35% 获得 1 份药草）
-      let foundHerb = 0;
-      if (Math.random() < 0.35) {
-        foundHerb = Math.floor(Math.random() * 2) + 1;
+      // 3. 计算获得的初始野外物资总重
+      let rawWood = Math.floor(Math.random() * (maxCapacity / 2)) + 2;
+      let rawGrass = Math.floor(Math.random() * (maxCapacity / 2)) + 2;
+      let rawStone = Math.floor(Math.random() * (maxCapacity / 3)) + 1;
+      let rawFruit = Math.floor(Math.random() * 3);
+
+      let totalWeight = rawWood + rawGrass + rawStone + rawFruit;
+
+      // 4. 背包负重截断处理：如果不幸超出背包容量上限，只能舍弃多余的物资带回最大容量
+      if (totalWeight > maxCapacity) {
+        const ratio = maxCapacity / totalWeight;
+        rawWood = Math.floor(rawWood * ratio);
+        rawGrass = Math.floor(rawGrass * ratio);
+        rawStone = Math.floor(rawStone * ratio);
+        rawFruit = Math.floor(rawFruit * ratio);
       }
 
-      // 2. 携带武器时，50% 概率打猎获得肉类！并且武器有 20% 概率损耗
-      let foundMeat = 0;
-      let weaponBroken = false;
-
-      if (hasWeapon && Math.random() < 0.50) {
-        foundMeat = Math.floor(Math.random() * 2) + 1;
-        
-        // 武器耐久消耗
-        if (Math.random() < 0.20) {
-          gameState.weapon -= 1;
-          weaponBroken = true;
-        }
-      }
-
-      // 增加获得物存入状态
-      gameState.wood += foundWood;
-      gameState.grass += foundGrass;
-      gameState.stone += foundStone;
-      gameState.fruit += foundFruit;
-      gameState.herb += foundHerb;
-      gameState.meat += foundMeat;
+      gameState.wood += rawWood;
+      gameState.grass += rawGrass;
+      gameState.stone += rawStone;
+      gameState.fruit += rawFruit;
 
       gameState.stamina = Math.max(10, gameState.stamina - 15);
 
-      // 日志输出拼接
-      let logs = [`带回了 ${foundWood} 树枝, ${foundGrass} 干草`];
-      if (foundHerb > 0) logs.push(`${foundHerb} 🌿药草`);
-      if (foundMeat > 0) logs.push(`${foundMeat} 🥩肉类`);
-      if (foundFruit > 0) logs.push(`${foundFruit} 野果`);
-
-      let logText = `【探索归来】小精灵满载而归！${logs.join('，')}`;
-      if (weaponBroken) {
-        logText += "。(⚠️小木棍在狩猎中损坏了)";
-      }
-
-      addLog(logText);
+      let totalGathered = rawWood + rawGrass + rawStone + rawFruit;
+      addLog(`【远足归来】小精灵把【${currentBag.name}】装得满满的！带回了 ${rawWood}木 ${rawGrass}草 ${rawStone}石 ${rawFruit}果 (负重 ${totalGathered}/${maxCapacity})。`);
+      
       gameState.lastActionTime = Date.now();
       updateUI(); saveGame();
     }, 6000);
@@ -129,10 +121,10 @@ function animalVisitCheck() {
           
           if (!gameState.specialItems.includes(gift.name)) {
             gameState.specialItems.push(gift.name);
-            dropLog = `，并悄悄留下了珍贵礼物【${gift.name}】！`;
+            dropLog = `，并悄悄在桌上留下了极其珍贵的礼物【${gift.name}】！`;
           } else {
             gameState.stone += 2;
-            dropLog = "，顺路带回了 2 块石头";
+            dropLog = "，顺路带回了 2 块平整的石头";
           }
         }
       }
@@ -141,7 +133,7 @@ function animalVisitCheck() {
 
       if (animal.favor >= 100) {
         animal.isResident = true;
-        addLog(`【新家人】${animal.name} 决定搬过来和小精灵一起生活了！`);
+        addLog(`【新家人】${animal.name} 对你温馨的家非常满意，决定搬过来和小精灵一起生活了！`);
       }
     }
   }
