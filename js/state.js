@@ -3,12 +3,14 @@ let gameState = {
   grass: 0,
   stone: 0,
   fruit: 5,
+  meat: 0,        // 恢复：肉类
   cooked: 0,
+  medicine: 0,    // 恢复：药品
   weapon: 0,
   stamina: 100,
   cookExp: 0,
   houseLevel: 1,
-  backpack: "none", // 新增：当前装备的背包类型 (none, straw, leather, sturdy)
+  backpack: "none",
   specialItems: [],
   isExploring: false,
   autoEat: true,
