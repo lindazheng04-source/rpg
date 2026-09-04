@@ -12,7 +12,9 @@ function updateUI() {
   document.getElementById('res-grass').innerText = gameState.grass;
   document.getElementById('res-stone').innerText = gameState.stone;
   document.getElementById('res-fruit').innerText = gameState.fruit;
+  if (document.getElementById('res-meat')) document.getElementById('res-meat').innerText = gameState.meat;
   document.getElementById('res-cooked').innerText = gameState.cooked;
+  if (document.getElementById('res-medicine')) document.getElementById('res-medicine').innerText = gameState.medicine;
   document.getElementById('res-weapon').innerText = gameState.weapon;
   document.getElementById('stamina').innerText = gameState.stamina;
   document.getElementById('cook-exp').innerText = gameState.cookExp;
@@ -28,16 +30,15 @@ function updateUI() {
     document.getElementById('house-comfort-info').innerText = `${currentComfort} 点`;
   }
 
-  // 新增：背包展示
   const currentBag = backpackSpecs[gameState.backpack || 'none'];
   if (document.getElementById('backpack-info')) {
-    document.getElementById('backpack-info').innerText = `${currentBag.name} (负重上限: ${currentBag.capacity})`;
+    document.getElementById('backpack-info').innerText = `${currentBag.name} (负重: ${currentBag.capacity})`;
   }
 
   // 状态显示
   let statusText = "在家里歇息";
   if (gameState.isExploring) {
-    statusText = "<span style='color:#3182ce; font-weight:bold;'>🎒 背着背包外出搜集物资中...</span>";
+    statusText = "<span style='color:#3182ce; font-weight:bold;'>🎒 带着背包外出搜集物资中...</span>";
   } else if (gameState.stamina < STAMINA_EXHAUSTED_THRESHOLD) {
     statusText = "<span style='color:red; font-weight:bold;'>精疲力竭！无力出门，等待进食</span>";
   } else if (gameState.stamina < STAMINA_WARNING_THRESHOLD) {
@@ -64,19 +65,27 @@ function updateUI() {
   }).join('');
 
   // 基础按钮控制
-  document.getElementById('btn-cook').disabled = !gameState.rooms.includes("厨房") || gameState.fruit < 2;
+  if (document.getElementById('btn-eat-meat')) document.getElementById('btn-eat-meat').disabled = gameState.meat < 1;
+  if (document.getElementById('btn-use-medicine')) document.getElementById('btn-use-medicine').disabled = gameState.medicine < 1;
+  if (document.getElementById('btn-craft-medicine')) document.getElementById('btn-craft-medicine').disabled = gameState.grass < 3 || gameState.fruit < 1;
+  
+  document.getElementById('btn-cook').disabled = !gameState.rooms.includes("厨房") || gameState.fruit < 1 || gameState.meat < 1;
   document.getElementById('btn-weapon').disabled = gameState.wood < 5;
   document.getElementById('btn-eat-fruit').disabled = gameState.fruit < 1;
   document.getElementById('btn-eat-cooked').disabled = gameState.cooked < 1;
 
-  // 新增：背包制作按钮状态更新
+  // 背包按钮控制
   ['straw', 'leather', 'sturdy'].forEach(type => {
     const btn = document.getElementById(`btn-bag-${type}`);
     if (btn) {
       const spec = backpackSpecs[type];
       const isEquipped = gameState.backpack === type;
-      btn.disabled = isEquipped || !(gameState.wood >= spec.wood && gameState.grass >= spec.grass);
-      btn.innerText = isEquipped ? `${spec.name} (已装备)` : `缝制${spec.name} (${spec.grass}草 ${spec.wood}木 | 负重${spec.capacity})`;
+      const needMeat = spec.meat || 0;
+      btn.disabled = isEquipped || !(gameState.wood >= spec.wood && gameState.grass >= spec.grass && gameState.meat >= needMeat);
+      
+      let costText = `${spec.grass}草 ${spec.wood}木`;
+      if (needMeat > 0) costText += ` ${needMeat}肉`;
+      btn.innerText = isEquipped ? `${spec.name} (已装备)` : `缝制${spec.name} (${costText} | 负重${spec.capacity})`;
     }
   });
 
