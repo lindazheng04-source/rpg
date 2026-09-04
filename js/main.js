@@ -1,8 +1,5 @@
-// 自动进食检测
 function checkAutoEat() {
   if (!gameState.autoEat) return;
-
-  // 当体力低于 50 时，若身上有食物，自动进食
   if (gameState.stamina < STAMINA_WARNING_THRESHOLD) {
     if (gameState.cooked > 0) {
       gameState.cooked -= 1;
@@ -16,16 +13,12 @@ function checkAutoEat() {
   }
 }
 
-// 无动作在家歇息恢复体力
 function checkRestRecovery() {
   if (gameState.isExploring) return;
-
   const now = Date.now();
-  // 30 秒（30000 毫秒）内无任何手动操作或处于休息状态，体力 +1
   if (now - gameState.lastActionTime >= REST_STAMINA_RECOVERY_INTERVAL * 1000) {
     if (gameState.stamina < 100) {
       gameState.stamina = Math.min(100, gameState.stamina + 1);
-      // 重置最后操作时间，避免每秒都重复加
       gameState.lastActionTime = now;
       updateUI();
     }
@@ -34,8 +27,6 @@ function checkRestRecovery() {
 
 function autoExploreCheck() {
   if (gameState.isExploring) return;
-
-  // 如果体力低于 20，绝对不触发远足
   if (gameState.stamina < STAMINA_EXHAUSTED_THRESHOLD) return;
 
   if (gameState.weapon >= 1 && (gameState.fruit >= 2 || gameState.cooked >= 1) && gameState.stamina >= 60) {
@@ -53,63 +44,85 @@ function autoExploreCheck() {
       gameState.fruit += foundFruit;
       gameState.stamina = Math.max(10, gameState.stamina - 30);
       addLog(`【远足归来】小精灵平安回家！带回了 ${foundStone} 块石头和 ${foundFruit} 颗野果。`);
-      gameState.lastActionTime = Date.now(); // 远足归来重置无动作时间
+      gameState.lastActionTime = Date.now();
       updateUI(); saveGame();
     }, 8000);
   }
 }
 
+// 动物拜访与物资/特殊物品留存逻辑
 function animalVisitCheck() {
   const keys = Object.keys(gameState.animals);
   const key = keys[Math.floor(Math.random() * keys.length)];
   const animal = gameState.animals[key];
 
-  const hasPetCorner = gameState.rooms.includes("动物游乐角");
-  const chance = hasPetCorner ? 0.4 : 0.2;
+  // 1. 舒适度越高，拜访概率越高 (基础 5%，每 10 点舒适度 + 1.5%，最高 30%)
+  const comfort = getHouseComfort();
+  const visitChance = Math.min(0.30, 0.05 + (comfort / 10) * 0.015);
 
-  if (Math.random() < chance) {
+  if (Math.random() < visitChance) {
     if (!animal.isResident) {
-      const gain = hasPetCorner ? 15 : 8;
+      // 2. 好感度上涨幅度放缓（每次仅 +2% ~ +5%）
+      const gain = Math.floor(Math.random() * 4) + 2;
       animal.favor = Math.min(100, animal.favor + gain);
-      addLog(`【来访】${animal.name} 来串门了！在家里开心地玩了一会儿。(好感度 +${gain}%)`);
+      
+      let giftLog = "";
+      // 3. 拜访概率留下基础物资或特殊物品
+      if (Math.random() < 0.6) {
+        const rewardType = Math.random();
+        if (rewardType < 0.3) {
+          gameState.wood += 3;
+          giftLog = "，顺便衔来了 3 根干树枝";
+        } else if (rewardType < 0.6) {
+          gameState.fruit += 2;
+          giftLog = "，并分享了 2 颗甜野果";
+        } else {
+          // 赠送特殊珍贵物品
+          const gift = specialGifts[Math.floor(Math.random() * specialGifts.length)];
+          if (!gameState.specialItems.includes(gift.name)) {
+            gameState.specialItems.push(gift.name);
+            giftLog = `，并悄悄留下了一件礼物【${gift.name}】！`;
+          } else {
+            gameState.stone += 3;
+            giftLog = "，顺路带回了 3 块平整的石头";
+          }
+        }
+      }
+
+      addLog(`【来访】${animal.name} 来串门了${giftLog}(好感度 +${gain}%)。`);
 
       if (animal.favor >= 100) {
         animal.isResident = true;
-        addLog(`【新家人】${animal.name} 对这里感到非常温暖，决定搬过来和小精灵一起生活了！`);
+        addLog(`【新家人】${animal.name} 对这里的环境感到非常满意，决定搬过来和小精灵一起生活了！`);
       }
     }
   }
 
+  // 常驻小动物日常帮忙机制
   keys.forEach(k => {
     const a = gameState.animals[k];
-    if (a.isResident && Math.random() < 0.3) {
+    if (a.isResident && Math.random() < 0.15) { // 降低常驻动物搜刮频率
       gameState.wood += 2;
       gameState.grass += 2;
-      addLog(`【好帮手】住在家里的 ${a.name} 主动跑出去帮忙衔回了一些树枝和干草！`);
+      addLog(`【好帮手】住在家里的 ${a.name} 跑出去帮忙衔回了一些树枝和干草！`);
     }
   });
 }
 
 function gameLoop() {
   if (!gameState.isExploring) {
-    // 自动进食检查
     checkAutoEat();
-
-    // 歇息恢复检查
     checkRestRecovery();
-
     autoExploreCheck();
     animalVisitCheck();
   }
-
   updateUI();
   saveGame();
 }
 
-// 页面加载完成后启动
 window.onload = () => {
   loadGame();
-  gameState.lastActionTime = Date.now(); // 初始化动作计时
+  gameState.lastActionTime = Date.now();
   updateUI();
-  setInterval(gameLoop, 2000); // 改为每 2 秒检测一次响应更敏捷
+  setInterval(gameLoop, 3000); // 调慢全局心跳至 3 秒，降低整体事件触发频率
 };
