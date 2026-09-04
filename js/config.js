@@ -1,4 +1,3 @@
-// 静态数据与房屋建造参数配置
 const roomNames = {
   kitchen: "厨房",
   bedroom: "睡房",
@@ -13,7 +12,6 @@ const roomCosts = {
   petcorner: { wood: 0, grass: 50, stone: 30, comfort: 35 }
 };
 
-// 房屋等级与初始舒适度
 const houseUpgradeCosts = {
   1: { name: "简陋草棚", capacity: 1, wood: 0, grass: 0, stone: 0, comfort: 5 },
   2: { name: "温馨木屋", capacity: 2, wood: 40, grass: 30, stone: 20, comfort: 20 },
@@ -21,7 +19,6 @@ const houseUpgradeCosts = {
   4: { name: "森林庄园", capacity: 4, wood: 150, grass: 100, stone: 120, comfort: 80 }
 };
 
-// 动物拜访可能留下的特殊珍贵礼物
 const specialGifts = [
   { name: "闪亮的松果", type: "collectible" },
   { name: "五彩羽毛", type: "collectible" },
