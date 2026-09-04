@@ -28,10 +28,16 @@ function updateUI() {
     document.getElementById('house-comfort-info').innerText = `${currentComfort} 点`;
   }
 
-  // 小精灵状态文字展示
+  // 新增：背包展示
+  const currentBag = backpackSpecs[gameState.backpack || 'none'];
+  if (document.getElementById('backpack-info')) {
+    document.getElementById('backpack-info').innerText = `${currentBag.name} (负重上限: ${currentBag.capacity})`;
+  }
+
+  // 状态显示
   let statusText = "在家里歇息";
   if (gameState.isExploring) {
-    statusText = "<span style='color:#3182ce; font-weight:bold;'>🌱 外出搜集物资中...</span>";
+    statusText = "<span style='color:#3182ce; font-weight:bold;'>🎒 背着背包外出搜集物资中...</span>";
   } else if (gameState.stamina < STAMINA_EXHAUSTED_THRESHOLD) {
     statusText = "<span style='color:red; font-weight:bold;'>精疲力竭！无力出门，等待进食</span>";
   } else if (gameState.stamina < STAMINA_WARNING_THRESHOLD) {
@@ -39,17 +45,16 @@ function updateUI() {
   }
   document.getElementById('elf-status').innerHTML = statusText;
 
-  // 渲染房间
+  // 房间与藏品
   const roomContainer = document.getElementById('room-list');
   roomContainer.innerHTML = gameState.rooms.map(r => `<span class="room-tag">${r}</span>`).join('') || '<span style="color:#888;">暂无房间</span>';
 
-  // 渲染藏品
   const specialContainer = document.getElementById('special-item-list');
   if (specialContainer) {
     specialContainer.innerHTML = (gameState.specialItems || []).map(item => `<span class="room-tag" style="background:#e8f4f8; border-color:#bee3f8; color:#2b6cb0;">🎁 ${item}</span>`).join('') || '<span style="color:#888;">暂无藏品</span>';
   }
 
-  // 渲染动物
+  // 动物列表
   const animalContainer = document.getElementById('animal-list');
   animalContainer.innerHTML = Object.keys(gameState.animals).map(k => {
     const a = gameState.animals[k];
@@ -58,13 +63,24 @@ function updateUI() {
     </div>`;
   }).join('');
 
-  // 按钮可否点击判定（玩家端制作）
+  // 基础按钮控制
   document.getElementById('btn-cook').disabled = !gameState.rooms.includes("厨房") || gameState.fruit < 2;
   document.getElementById('btn-weapon').disabled = gameState.wood < 5;
   document.getElementById('btn-eat-fruit').disabled = gameState.fruit < 1;
   document.getElementById('btn-eat-cooked').disabled = gameState.cooked < 1;
 
-  // 建造房间按钮逻辑
+  // 新增：背包制作按钮状态更新
+  ['straw', 'leather', 'sturdy'].forEach(type => {
+    const btn = document.getElementById(`btn-bag-${type}`);
+    if (btn) {
+      const spec = backpackSpecs[type];
+      const isEquipped = gameState.backpack === type;
+      btn.disabled = isEquipped || !(gameState.wood >= spec.wood && gameState.grass >= spec.grass);
+      btn.innerText = isEquipped ? `${spec.name} (已装备)` : `缝制${spec.name} (${spec.grass}草 ${spec.wood}木 | 负重${spec.capacity})`;
+    }
+  });
+
+  // 房间与扩建控制
   const isFullCapacity = gameState.rooms.length >= maxCapacity;
   for (let key in roomCosts) {
     const btn = document.getElementById(`btn-build-${key}`);
@@ -77,14 +93,13 @@ function updateUI() {
       if (owned) {
         btn.innerText = `${roomNames[key]} (已建造)`;
       } else if (isFullCapacity) {
-        btn.innerText = `建造${roomNames[key]} (容量已满，需要扩建房屋)`;
+        btn.innerText = `建造${roomNames[key]} (空间已满，请扩建)`;
       } else {
-        btn.innerText = `建造${roomNames[key]} (+${cost.comfort}舒适度 | ${cost.wood}木 ${cost.grass}草 ${cost.stone}石)`;
+        btn.innerText = `建造${roomNames[key]} (+${cost.comfort}舒适 | ${cost.wood}木 ${cost.grass}草 ${cost.stone}石)`;
       }
     }
   }
 
-  // 房屋扩建按钮逻辑
   const upgradeBtn = document.getElementById('btn-upgrade-house');
   if (upgradeBtn) {
     const nextLevel = gameState.houseLevel + 1;
