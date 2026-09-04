@@ -21,7 +21,9 @@
         <div>🌿 干草: <span id="res-grass">0</span></div>
         <div>🪨 石头: <span id="res-stone">0</span></div>
         <div>🍒 野果: <span id="res-fruit">0</span></div>
+        <div>🍖 肉类: <span id="res-meat">0</span></div>
         <div>🍲 熟食: <span id="res-cooked">0</span></div>
+        <div>💊 药品: <span id="res-medicine">0</span></div>
         <div>🗡️ 木棍: <span id="res-weapon">0</span></div>
       </div>
       <div class="info-grid">
@@ -36,13 +38,21 @@
     <div class="section-box">
       <h3>🛠️ 玩家工作台 (利用已有物资帮小精灵制作/建造)</h3>
       
-      <!-- 进食与制作 -->
+      <!-- 进食与药品使用 -->
       <div class="button-group">
-        <button id="btn-eat-fruit" onclick="eatFruit()">🍎 喂小精灵吃野果 (+15 体力)</button>
-        <button id="btn-eat-cooked" onclick="eatCooked()">🍲 喂小精灵吃熟食 (+50 体力)</button>
+        <button id="btn-eat-fruit" onclick="eatFruit()">🍎 喂野果 (+15体力)</button>
+        <button id="btn-eat-meat" onclick="eatMeat()">🍖 喂肉块 (+25体力)</button>
+        <button id="btn-eat-cooked" onclick="eatCooked()">🍲 喂烤肉果泥 (+50体力)</button>
+        <button id="btn-use-medicine" onclick="useMedicine()">💊 喂服草药膏 (+80体力)</button>
         <button onclick="toggleAutoEat()">🍱 切换/开启自动进食</button>
-        <button id="btn-cook" onclick="cookFood()">🍳 烹饪烤果泥 (需 2 野果 + 厨房)</button>
-        <button id="btn-weapon" onclick="craftWeapon()">🗡️ 削制小木棍 (需 5 树枝)</button>
+      </div>
+
+      <!-- 物品制作与烹饪 -->
+      <h4 style="margin-top: 15px;">🔨 基础制作与烹饪</h4>
+      <div class="button-group">
+        <button id="btn-craft-medicine" onclick="craftMedicine()">💊 炼制草药膏 (3干草 1野果)</button>
+        <button id="btn-cook" onclick="cookFood()">🍳 烹饪烤肉果泥 (1野果 1肉类 + 厨房)</button>
+        <button id="btn-weapon" onclick="craftWeapon()">🗡️ 削制小木棍 (5树枝)</button>
       </div>
 
       <!-- 背包制作 -->
@@ -50,7 +60,7 @@
       <div class="button-group">
         <button id="btn-bag-straw" onclick="craftBackpack('straw')">缝制编织草袋 (20草 | 负重15)</button>
         <button id="btn-bag-leather" onclick="craftBackpack('leather')">缝制简易藤包 (35草 25木 | 负重35)</button>
-        <button id="btn-bag-sturdy" onclick="craftBackpack('sturdy')">缝制坚固旅行包 (60草 60木 | 负重70)</button>
+        <button id="btn-bag-sturdy" onclick="craftBackpack('sturdy')">缝制坚固皮包 (40草 40木 5肉 | 负重70)</button>
       </div>
 
       <!-- 房屋扩建与房间建造 -->
