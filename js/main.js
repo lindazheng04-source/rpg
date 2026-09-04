@@ -50,43 +50,51 @@ function autoExploreCheck() {
   }
 }
 
-// 核心优化：小动物拜访、物资留下与好感度逻辑
+// 核心调整：动物拜访与精细化掉落概率
 function animalVisitCheck() {
   const keys = Object.keys(gameState.animals);
   const key = keys[Math.floor(Math.random() * keys.length)];
   const animal = gameState.animals[key];
 
-  // 1. 舒适度决定拜访概率（基础基础仅 3%，每 10 点舒适度增加 1.2%，最高不超过 25%）
+  // 1. 舒适度决定拜访概率（基础 3%，最高 25%）
   const comfort = typeof getHouseComfort === 'function' ? getHouseComfort() : 5;
   const visitChance = Math.min(0.25, 0.03 + (comfort / 10) * 0.012);
 
   if (Math.random() < visitChance) {
     if (!animal.isResident) {
-      // 2. 降低好感度每次上涨幅度：仅上涨 1 ~ 3 点（养成路线变长）
+      // 2. 好感度缓慢增加 (+1% ~ +3%)
       const favorGain = Math.floor(Math.random() * 3) + 1;
       animal.favor = Math.min(100, animal.favor + favorGain);
 
-      // 3. 50% 概率留下常规物资或特殊珍品
       let dropLog = "";
-      if (Math.random() < 0.50) {
-        const dropType = Math.random();
-        if (dropType < 0.35) {
+      
+      // 3. 40% 概率带礼物/物资
+      if (Math.random() < 0.40) {
+        const dropRoll = Math.random();
+
+        // 【概率阶梯设计】：
+        // 45% 概率：树枝/干草（普通）
+        // 40% 概率：野果/石头（常见）
+        // 15% 概率：特殊收藏品（稀有）
+        
+        if (dropRoll < 0.45) {
           const woodGain = Math.floor(Math.random() * 3) + 1;
           gameState.wood += woodGain;
           dropLog = `，顺便带来了 ${woodGain} 根树枝`;
-        } else if (dropType < 0.70) {
+        } else if (dropRoll < 0.85) {
           const fruitGain = Math.floor(Math.random() * 2) + 1;
           gameState.fruit += fruitGain;
           dropLog = `，并分享了 ${fruitGain} 颗甜野果`;
         } else {
-          // 30% 的掉落概率获得特殊收藏品
+          // 仅 15% 极低概率触发特殊收藏品掉落！
           const gift = specialGifts[Math.floor(Math.random() * specialGifts.length)];
           if (!gameState.specialItems) gameState.specialItems = [];
           
           if (!gameState.specialItems.includes(gift.name)) {
             gameState.specialItems.push(gift.name);
-            dropLog = `，并悄悄在桌上留下了珍贵礼物【${gift.name}】！`;
+            dropLog = `，并悄悄在桌上留下了极其珍贵的礼物【${gift.name}】！`;
           } else {
+            // 已有该收藏品时，退化为普通石头
             gameState.stone += 2;
             dropLog = "，顺路带回了 2 块平整的石头";
           }
@@ -102,7 +110,7 @@ function animalVisitCheck() {
     }
   }
 
-  // 常驻小动物协助搜集的频率也同步放缓
+  // 常驻小动物日常协助
   keys.forEach(k => {
     const a = gameState.animals[k];
     if (a.isResident && Math.random() < 0.08) {
@@ -128,6 +136,5 @@ window.onload = () => {
   loadGame();
   gameState.lastActionTime = Date.now();
   updateUI();
-  // 全局心跳拉长至 4 秒一次（显著降低来访过于频繁的感觉）
-  setInterval(gameLoop, 4000); 
+  setInterval(gameLoop, 4000); // 4 秒心跳
 };
