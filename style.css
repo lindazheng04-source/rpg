@@ -1,0 +1,116 @@
+:root {
+  --bg-color: #f4efde;
+  --panel-bg: #e2dac2;
+  --text-color: #383227;
+  --accent-color: #5c7457;
+  --border-color: #b8ac90;
+  --hover-color: #485c44;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 20px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .container { grid-template-columns: 1fr; }
+}
+
+h2, h3 { margin-top: 0; color: var(--accent-color); font-size: 1.1em; }
+
+.card {
+  background-color: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.log-container {
+  height: 320px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  background-color: #fcfaf2;
+  padding: 12px;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.log-entry {
+  margin-bottom: 6px;
+  font-size: 0.88em;
+  border-bottom: 1px dashed #e2dac2;
+  padding-bottom: 4px;
+}
+
+.time-stamp { color: #887d65; font-size: 0.85em; margin-right: 6px; }
+
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+button {
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  padding: 8px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85em;
+  transition: background-color 0.2s;
+}
+
+button:hover { background-color: var(--hover-color); }
+button:disabled { background-color: #999; cursor: not-allowed; opacity: 0.6; }
+
+.stat-label { font-weight: bold; }
+.resource-list { list-style: none; padding: 0; margin: 0; font-size: 0.9em; }
+.resource-list li { display: flex; justify-content: space-between; margin-bottom: 4px; }
+
+.room-tag {
+  display: inline-block;
+  background: #d0c4a5;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  margin-right: 4px;
+  margin-bottom: 4px;
+}
+
+.animal-card {
+  border-top: 1px solid var(--border-color);
+  padding-top: 6px;
+  margin-top: 6px;
+  font-size: 0.85em;
+}
+
+.footer-tips {
+  margin-top: 15px;
+  font-size: 0.85em;
+  color: #666;
+  text-align: right;
+}
+
+.btn-reset {
+  background: #b33939;
+  margin-left: 10px;
+  padding: 2px 6px;
+}
