@@ -20,12 +20,12 @@ const houseUpgradeCosts = {
   4: { name: "森林庄园", capacity: 4, wood: 150, grass: 100, stone: 120, comfort: 80 }
 };
 
-// 新增：背包规格与制作消耗配置（capacity: 能够负重的物资上限重量/数量）
+// 背包规格与负重配置
 const backpackSpecs = {
-  none: { name: "无背包", capacity: 5, wood: 0, grass: 0 },
-  straw: { name: "编织草袋", capacity: 15, wood: 0, grass: 20 },
-  leather: { name: "简易藤包", capacity: 35, wood: 25, grass: 35 },
-  sturdy: { name: "坚固旅行包", capacity: 70, wood: 60, grass: 60 }
+  none: { name: "无背包", capacity: 5, wood: 0, grass: 0, meat: 0 },
+  straw: { name: "编织草袋", capacity: 15, wood: 0, grass: 20, meat: 0 },
+  leather: { name: "简易藤包", capacity: 35, wood: 25, grass: 35, meat: 0 },
+  sturdy: { name: "坚固皮包", capacity: 70, wood: 40, grass: 40, meat: 5 } // 制作坚固皮包需要肉类/兽皮材料
 };
 
 const specialGifts = [
