@@ -25,58 +25,66 @@ function checkRestRecovery() {
   }
 }
 
-function autoExploreCheck() {
+// 核心优化：小精灵完全自主外出搜集物资
+function elfAutoGatherCheck() {
   if (gameState.isExploring) return;
-  if (gameState.stamina < STAMINA_EXHAUSTED_THRESHOLD) return;
 
-  if (gameState.weapon >= 1 && (gameState.fruit >= 2 || gameState.cooked >= 1) && gameState.stamina >= 60) {
+  // 体力小于 30 时小精灵太累了，不出门
+  if (gameState.stamina < 30) return;
+
+  // 每次轮询有 20% 的概率小精灵会想要出门探索/捡东西
+  if (Math.random() < 0.20) {
     gameState.isExploring = true;
-    if (gameState.cooked >= 1) gameState.cooked -= 1; else gameState.fruit -= 2;
-    
-    addLog("【自主远足】小精灵收拾好背包，带上小木棍，自主出门去森林深处探索了！");
+    addLog("【自主活动】小精灵哼着歌，蹦蹦跳跳地出门去附近树林捡物资了...");
     updateUI();
 
+    // 6 秒后搜集归来
     setTimeout(() => {
       gameState.isExploring = false;
-      const foundStone = Math.floor(Math.random() * 5) + 2;
-      const foundFruit = Math.floor(Math.random() * 4) + 1;
+
+      // 搜集成果（树枝、干草、石头、野果）
+      const foundWood = Math.floor(Math.random() * 4) + 2;
+      const foundGrass = Math.floor(Math.random() * 4) + 2;
+      const foundStone = Math.floor(Math.random() * 3) + 1;
+      const foundFruit = Math.floor(Math.random() * 3);
+
+      gameState.wood += foundWood;
+      gameState.grass += foundGrass;
       gameState.stone += foundStone;
       gameState.fruit += foundFruit;
-      gameState.stamina = Math.max(10, gameState.stamina - 30);
-      addLog(`【远足归来】小精灵平安回家！带回了 ${foundStone} 块石头和 ${foundFruit} 颗野果。`);
+
+      // 出门消耗 15 点体力
+      gameState.stamina = Math.max(10, gameState.stamina - 15);
+
+      let resultText = `带回了 ${foundWood} 树枝, ${foundGrass} 干草, ${foundStone} 石头`;
+      if (foundFruit > 0) resultText += `, ${foundFruit} 颗野果`;
+
+      addLog(`【外出归来】小精灵满载而归！${resultText}。`);
+      
       gameState.lastActionTime = Date.now();
       updateUI(); saveGame();
-    }, 8000);
+    }, 6000);
   }
 }
 
-// 核心调整：动物拜访与精细化掉落概率
+// 动物拜访逻辑
 function animalVisitCheck() {
   const keys = Object.keys(gameState.animals);
   const key = keys[Math.floor(Math.random() * keys.length)];
   const animal = gameState.animals[key];
 
-  // 1. 舒适度决定拜访概率（基础 3%，最高 25%）
   const comfort = typeof getHouseComfort === 'function' ? getHouseComfort() : 5;
   const visitChance = Math.min(0.25, 0.03 + (comfort / 10) * 0.012);
 
   if (Math.random() < visitChance) {
     if (!animal.isResident) {
-      // 2. 好感度缓慢增加 (+1% ~ +3%)
       const favorGain = Math.floor(Math.random() * 3) + 1;
       animal.favor = Math.min(100, animal.favor + favorGain);
 
       let dropLog = "";
-      
-      // 3. 40% 概率带礼物/物资
       if (Math.random() < 0.40) {
         const dropRoll = Math.random();
 
-        // 【概率阶梯设计】：
-        // 45% 概率：树枝/干草（普通）
-        // 40% 概率：野果/石头（常见）
-        // 15% 概率：特殊收藏品（稀有）
-        
         if (dropRoll < 0.45) {
           const woodGain = Math.floor(Math.random() * 3) + 1;
           gameState.wood += woodGain;
@@ -86,7 +94,6 @@ function animalVisitCheck() {
           gameState.fruit += fruitGain;
           dropLog = `，并分享了 ${fruitGain} 颗甜野果`;
         } else {
-          // 仅 15% 极低概率触发特殊收藏品掉落！
           const gift = specialGifts[Math.floor(Math.random() * specialGifts.length)];
           if (!gameState.specialItems) gameState.specialItems = [];
           
@@ -94,7 +101,6 @@ function animalVisitCheck() {
             gameState.specialItems.push(gift.name);
             dropLog = `，并悄悄在桌上留下了极其珍贵的礼物【${gift.name}】！`;
           } else {
-            // 已有该收藏品时，退化为普通石头
             gameState.stone += 2;
             dropLog = "，顺路带回了 2 块平整的石头";
           }
@@ -110,7 +116,6 @@ function animalVisitCheck() {
     }
   }
 
-  // 常驻小动物日常协助
   keys.forEach(k => {
     const a = gameState.animals[k];
     if (a.isResident && Math.random() < 0.08) {
@@ -125,7 +130,7 @@ function gameLoop() {
   if (!gameState.isExploring) {
     checkAutoEat();
     checkRestRecovery();
-    autoExploreCheck();
+    elfAutoGatherCheck(); // 小精灵自主外出捡物资
     animalVisitCheck();
   }
   updateUI();
@@ -136,5 +141,5 @@ window.onload = () => {
   loadGame();
   gameState.lastActionTime = Date.now();
   updateUI();
-  setInterval(gameLoop, 4000); // 4 秒心跳
+  setInterval(gameLoop, 4000);
 };
