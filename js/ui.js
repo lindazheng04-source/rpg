@@ -17,7 +17,17 @@ function updateUI() {
   document.getElementById('res-weapon').innerText = gameState.weapon;
   document.getElementById('stamina').innerText = gameState.stamina;
   document.getElementById('cook-exp').innerText = gameState.cookExp;
-  document.getElementById('elf-status').innerText = gameState.isExploring ? "外出去远足了..." : "在家里歇息";
+
+  // 1. 体力状态与疲惫提醒显示
+  let statusText = "在家里歇息";
+  if (gameState.isExploring) {
+    statusText = "外出去远足了...";
+  } else if (gameState.stamina < STAMINA_EXHAUSTED_THRESHOLD) {
+    statusText = "<span style='color:red; font-weight:bold;'>精疲力竭！只能进食休息</span>";
+  } else if (gameState.stamina < STAMINA_WARNING_THRESHOLD) {
+    statusText = "<span style='color:orange;'>有点疲惫，需要进食了</span>";
+  }
+  document.getElementById('elf-status').innerHTML = statusText;
 
   // 渲染房间列表
   const roomContainer = document.getElementById('room-list');
@@ -32,16 +42,19 @@ function updateUI() {
     </div>`;
   }).join('');
 
-  // 按钮禁用与状态控制
-  document.getElementById('btn-cook').disabled = !gameState.rooms.includes("厨房") || gameState.fruit < 2;
+  // 2. 体力低于20时的按键限制逻辑
+  const isExhausted = gameState.stamina < STAMINA_EXHAUSTED_THRESHOLD;
+
+  document.getElementById('btn-cook').disabled = isExhausted || !gameState.rooms.includes("厨房") || gameState.fruit < 2;
   document.getElementById('btn-eat-cooked').disabled = gameState.cooked < 1;
 
+  // 建造按钮在精疲力竭时全部禁用
   for (let key in roomCosts) {
     const btn = document.getElementById(`btn-build-${key}`);
     if (btn) {
       const cost = roomCosts[key];
       const owned = gameState.rooms.includes(roomNames[key]);
-      btn.disabled = owned || !(gameState.wood >= cost.wood && gameState.grass >= cost.grass && gameState.stone >= cost.stone);
+      btn.disabled = isExhausted || owned || !(gameState.wood >= cost.wood && gameState.grass >= cost.grass && gameState.stone >= cost.stone);
       btn.innerText = owned ? `${roomNames[key]} (已建造)` : `建造${roomNames[key]} (${cost.wood}木 ${cost.grass}草 ${cost.stone}石)`;
     }
   }
