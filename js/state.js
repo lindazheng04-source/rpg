@@ -1,19 +1,21 @@
-// 游戏核心动态数据
 let gameState = {
   wood: 0,
   grass: 0,
   stone: 0,
   fruit: 5,
+  meat: 0,     // 新增：肉类
+  herb: 0,     // 新增：药草
+  medicine: 0, // 新增：草药膏/药品
   cooked: 0,
   weapon: 0,
   stamina: 100,
   cookExp: 0,
-  houseLevel: 1, // 当前房屋等级（1: 简陋草棚，2: 温馨木屋...）
-  specialItems: [], // 收集到的特殊物品列表
+  houseLevel: 1,
+  specialItems: [],
   isExploring: false,
   autoEat: true,
   lastActionTime: Date.now(),
-  rooms: [], // 已建造的房间
+  rooms: [],
   animals: {
     squirrel: { name: "小松鼠", favor: 0, isResident: false },
     bird: { name: "小麻雀", favor: 0, isResident: false },
@@ -22,7 +24,6 @@ let gameState = {
   lastTime: Date.now()
 };
 
-// 计算当前房屋的总舒适度
 function getHouseComfort() {
   let baseComfort = houseUpgradeCosts[gameState.houseLevel].comfort;
   let roomsComfort = 0;
@@ -36,7 +37,6 @@ function getHouseComfort() {
   return baseComfort + roomsComfort;
 }
 
-// 存档与读档
 function saveGame() {
   gameState.lastTime = Date.now();
   localStorage.setItem('elf_game_v2', JSON.stringify(gameState));
