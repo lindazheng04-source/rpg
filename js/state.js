@@ -9,6 +9,8 @@ let gameState = {
   stamina: 100,
   cookExp: 0,
   isExploring: false,
+  autoEat: true, // 新增：自动进食开关（默认开启）
+  lastActionTime: Date.now(), // 新增：记录上一次玩家操作或状态改变的时间
   rooms: ['草棚'],
   animals: {
     squirrel: { name: "小松鼠", favor: 0, isResident: false },
