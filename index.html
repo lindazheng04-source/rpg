@@ -7,100 +7,83 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>🌲 小精灵的森林小屋</h1>
-      <p class="subtitle">一个小精灵的自主观察与家园建造游戏</p>
-    </header>
+  <div class="game-container">
+    <h1>🌲 小精灵的森林小屋</h1>
 
-    <!-- 顶栏状态与物资 -->
-    <section class="card status-card">
+    <!-- 状态与资源面板 -->
+    <div class="status-card">
       <div class="status-header">
         <h2>小精灵状态：<span id="elf-status">在家里歇息</span></h2>
-        <div class="stamina-box">⚡ 体力：<span id="stamina">100</span>/100</div>
+        <div>体力：<span id="stamina">100</span> / 100</div>
       </div>
-
-      <div class="resources-grid">
-        <div class="res-item">🪵 树枝: <span id="res-wood">0</span></div>
-        <div class="res-item">🌿 干草: <span id="res-grass">0</span></div>
-        <div class="res-item">🪨 石头: <span id="res-stone">0</span></div>
-        <div class="res-item">🌿 药草: <span id="res-herb">0</span></div>
-        <div class="res-item">💊 药品: <span id="res-medicine">0</span></div>
-        <div class="res-item">🍎 野果: <span id="res-fruit">0</span></div>
-        <div class="res-item">🥩 肉类: <span id="res-meat">0</span></div>
-        <div class="res-item">🍲 熟食: <span id="res-cooked">0</span></div>
-        <div class="res-item">🗡️ 木棍: <span id="res-weapon">0</span></div>
-        
+      <div class="resource-grid">
+        <div>🪵 树枝: <span id="res-wood">0</span></div>
+        <div>🌿 干草: <span id="res-grass">0</span></div>
+        <div>🪨 石头: <span id="res-stone">0</span></div>
+        <div>🍒 野果: <span id="res-fruit">0</span></div>
+        <div>🍲 熟食: <span id="res-cooked">0</span></div>
+        <div>🗡️ 木棍: <span id="res-weapon">0</span></div>
       </div>
-
-      <div class="info-row">
+      <div class="info-grid">
         <div>🏠 房屋规模：<span id="house-level-info">简陋草棚</span></div>
+        <div>🎒 装备背包：<span id="backpack-info">无背包 (负重上限: 5)</span></div>
         <div>✨ 家园舒适度：<span id="house-comfort-info">5 点</span></div>
-        <div>🍳 烹饪经验：<span id="cook-exp">0</span>%</div>
+        <div>🍳 烹饪熟练度：<span id="cook-exp">0</span>%</div>
       </div>
-    </section>
-
-    <!-- 中间两栏：家园设施与动物伙伴 -->
-    <div class="main-grid">
-      <!-- 房间与藏品 -->
-      <section class="card">
-        <h3>🏡 家园建设与珍藏</h3>
-        <div class="sub-section">
-          <h4>已建房间</h4>
-          <div id="room-list" class="tag-container"></div>
-        </div>
-        <div class="sub-section">
-          <h4>特殊珍藏</h4>
-          <div id="special-item-list" class="tag-container"></div>
-        </div>
-      </section>
-
-      <!-- 动物伙伴 -->
-      <section class="card">
-        <h3>🐾 森林里的动物朋友</h3>
-        <div id="animal-list" class="animal-grid"></div>
-      </section>
     </div>
 
-    <!-- 玩家工作台与制作区 -->
-    <section class="card actions-card">
-      <h3>🛠️ 玩家工作台 (帮小精灵制作与建造)</h3>
+    <!-- 已建房间与收藏品 -->
+    <div class="section-box">
+      <h3>已建造的房间</h3>
+      <div id="room-list"></div>
       
-      <div class="action-group">
-        <h4>🍱 补充能量与加工</h4>
-        <div class="button-row">
-          <button id="btn-eat-fruit" onclick="eatFruit()">🍎 喂吃野果 (+15体力)</button>
-          <button id="btn-eat-cooked" onclick="eatCooked()">🍲 喂吃熟食 (+50体力)</button>
-          <button onclick="toggleAutoEat()">🔄 自动进食开关</button>
-          <button id="btn-cook" onclick="cookFood()">🍳 烹饪果泥 (2野果+厨房)</button>
-          <button id="btn-weapon" onclick="craftWeapon()">🗡️ 削小木棍 (5树枝)</button>
-          <button id="btn-craft-medicine" onclick="craftMedicine()">💊 研磨药品 (需 2 药草)</button>
-          <button id="btn-use-medicine" onclick="useMedicine()">🩹 敷药膏疗伤 (+80 体力)</button>
-        </div>
+      <h3>特殊珍藏</h3>
+      <div id="special-item-list"></div>
+    </div>
+
+    <!-- 玩家操作工作台 -->
+    <div class="section-box">
+      <h3>🛠️ 玩家工作台</h3>
+      
+      <h4>🎒 背包制作 (制作后自动给小精灵背上)</h4>
+      <div class="button-group">
+        <button id="btn-bag-straw" onclick="craftBackpack('straw')">缝制编织草袋 (20草 | 负重15)</button>
+        <button id="btn-bag-leather" onclick="craftBackpack('leather')">缝制简易藤包 (35草 25木 | 负重35)</button>
+        <button id="btn-bag-sturdy" onclick="craftBackpack('sturdy')">缝制坚固旅行包 (60草 60木 | 负重70)</button>
       </div>
 
-      <div class="action-group" style="margin-top: 15px;">
-        <h4>🏠 房屋扩建与改造</h4>
-        <div class="button-row">
-          <button id="btn-upgrade-house" class="primary-btn" onclick="upgradeHouse()">扩建房屋</button>
-          <button id="btn-build-kitchen" onclick="buildRoom('kitchen')">建造厨房</button>
-          <button id="btn-build-bedroom" onclick="buildRoom('bedroom')">建造睡房</button>
-          <button id="btn-build-classroom" onclick="buildRoom('classroom')">建造课堂</button>
-          <button id="btn-build-petcorner" onclick="buildRoom('petcorner')">建造动物游乐角</button>
-        </div>
+      <h4 style="margin-top: 15px;">🍞 基础制作与进食</h4>
+      <div class="button-group">
+        <button id="btn-cook" onclick="cookFood()">🍳 烹饪烤果泥 (需 2 野果 + 厨房)</button>
+        <button id="btn-weapon" onclick="craftWeapon()">🗡️ 削制小木棍 (需 5 树枝)</button>
+        <button id="btn-eat-fruit" onclick="eatFruit()">🍎 喂小精灵吃野果 (+15 体力)</button>
+        <button id="btn-eat-cooked" onclick="eatCooked()">🍲 喂小精灵吃熟食 (+50 体力)</button>
+        <button onclick="toggleAutoEat()">🍱 切换/开启自动进食</button>
       </div>
-    </section>
 
-    <!-- 森林日志 -->
-    <section class="card log-card">
+      <h4 style="margin-top: 15px;">🏠 房屋扩建与房间建造</h4>
+      <div class="button-group">
+        <button id="btn-upgrade-house" onclick="upgradeHouse()">扩建房屋</button>
+        <button id="btn-build-kitchen" onclick="buildRoom('kitchen')">建造厨房</button>
+        <button id="btn-build-bedroom" onclick="buildRoom('bedroom')">建造睡房</button>
+        <button id="btn-build-classroom" onclick="buildRoom('classroom')">建造课堂</button>
+        <button id="btn-build-petcorner" onclick="buildRoom('petcorner')">建造动物游乐角</button>
+      </div>
+    </div>
+
+    <!-- 动物朋友 -->
+    <div class="section-box">
+      <h3>🐾 森林里的动物朋友</h3>
+      <div id="animal-list"></div>
+    </div>
+
+    <!-- 日志面板 -->
+    <div class="section-box">
       <h3>📜 森林生活日志</h3>
-      <div id="log-box" class="log-container"></div>
-    </section>
+      <div id="log-box"></div>
+    </div>
 
-    <!-- 底部重置 -->
-    <footer style="text-align: center; margin-top: 20px;">
-      <button class="reset-btn" onclick="resetData()">↺ 重置游戏数据</button>
-    </footer>
+    <button class="reset-btn" onclick="resetData()">重置游戏数据</button>
   </div>
 
   <script src="js/config.js"></script>
