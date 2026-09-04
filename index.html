@@ -24,9 +24,13 @@
         <div class="res-item">🪵 树枝: <span id="res-wood">0</span></div>
         <div class="res-item">🌿 干草: <span id="res-grass">0</span></div>
         <div class="res-item">🪨 石头: <span id="res-stone">0</span></div>
+        <div class="res-item">🌿 药草: <span id="res-herb">0</span></div>
+        <div class="res-item">💊 药品: <span id="res-medicine">0</span></div>
         <div class="res-item">🍎 野果: <span id="res-fruit">0</span></div>
+        <div class="res-item">🥩 肉类: <span id="res-meat">0</span></div>
         <div class="res-item">🍲 熟食: <span id="res-cooked">0</span></div>
         <div class="res-item">🗡️ 木棍: <span id="res-weapon">0</span></div>
+        
       </div>
 
       <div class="info-row">
@@ -70,6 +74,8 @@
           <button onclick="toggleAutoEat()">🔄 自动进食开关</button>
           <button id="btn-cook" onclick="cookFood()">🍳 烹饪果泥 (2野果+厨房)</button>
           <button id="btn-weapon" onclick="craftWeapon()">🗡️ 削小木棍 (5树枝)</button>
+          <button id="btn-craft-medicine" onclick="craftMedicine()">💊 研磨药品 (需 2 药草)</button>
+          <button id="btn-use-medicine" onclick="useMedicine()">🩹 敷药膏疗伤 (+80 体力)</button>
         </div>
       </div>
 
