@@ -26,41 +26,34 @@
       </div>
       <div class="info-grid">
         <div>🏠 房屋规模：<span id="house-level-info">简陋草棚</span></div>
-        <div>🎒 装备背包：<span id="backpack-info">无背包 (负重上限: 5)</span></div>
+        <div>🎒 装备背包：<span id="backpack-info">无背包 (负重: 5)</span></div>
         <div>✨ 家园舒适度：<span id="house-comfort-info">5 点</span></div>
         <div>🍳 烹饪熟练度：<span id="cook-exp">0</span>%</div>
       </div>
     </div>
 
-    <!-- 已建房间与收藏品 -->
-    <div class="section-box">
-      <h3>已建造的房间</h3>
-      <div id="room-list"></div>
-      
-      <h3>特殊珍藏</h3>
-      <div id="special-item-list"></div>
-    </div>
-
     <!-- 玩家操作工作台 -->
     <div class="section-box">
-      <h3>🛠️ 玩家工作台</h3>
+      <h3>🛠️ 玩家工作台 (利用已有物资帮小精灵制作/建造)</h3>
       
-      <h4>🎒 背包制作 (制作后自动给小精灵背上)</h4>
+      <!-- 进食与制作 -->
+      <div class="button-group">
+        <button id="btn-eat-fruit" onclick="eatFruit()">🍎 喂小精灵吃野果 (+15 体力)</button>
+        <button id="btn-eat-cooked" onclick="eatCooked()">🍲 喂小精灵吃熟食 (+50 体力)</button>
+        <button onclick="toggleAutoEat()">🍱 切换/开启自动进食</button>
+        <button id="btn-cook" onclick="cookFood()">🍳 烹饪烤果泥 (需 2 野果 + 厨房)</button>
+        <button id="btn-weapon" onclick="craftWeapon()">🗡️ 削制小木棍 (需 5 树枝)</button>
+      </div>
+
+      <!-- 背包制作 -->
+      <h4 style="margin-top: 15px;">🎒 背包缝制 (决定外出采集负重上限)</h4>
       <div class="button-group">
         <button id="btn-bag-straw" onclick="craftBackpack('straw')">缝制编织草袋 (20草 | 负重15)</button>
         <button id="btn-bag-leather" onclick="craftBackpack('leather')">缝制简易藤包 (35草 25木 | 负重35)</button>
         <button id="btn-bag-sturdy" onclick="craftBackpack('sturdy')">缝制坚固旅行包 (60草 60木 | 负重70)</button>
       </div>
 
-      <h4 style="margin-top: 15px;">🍞 基础制作与进食</h4>
-      <div class="button-group">
-        <button id="btn-cook" onclick="cookFood()">🍳 烹饪烤果泥 (需 2 野果 + 厨房)</button>
-        <button id="btn-weapon" onclick="craftWeapon()">🗡️ 削制小木棍 (需 5 树枝)</button>
-        <button id="btn-eat-fruit" onclick="eatFruit()">🍎 喂小精灵吃野果 (+15 体力)</button>
-        <button id="btn-eat-cooked" onclick="eatCooked()">🍲 喂小精灵吃熟食 (+50 体力)</button>
-        <button onclick="toggleAutoEat()">🍱 切换/开启自动进食</button>
-      </div>
-
+      <!-- 房屋扩建与房间建造 -->
       <h4 style="margin-top: 15px;">🏠 房屋扩建与房间建造</h4>
       <div class="button-group">
         <button id="btn-upgrade-house" onclick="upgradeHouse()">扩建房屋</button>
@@ -69,6 +62,15 @@
         <button id="btn-build-classroom" onclick="buildRoom('classroom')">建造课堂</button>
         <button id="btn-build-petcorner" onclick="buildRoom('petcorner')">建造动物游乐角</button>
       </div>
+    </div>
+
+    <!-- 已建房间与收藏品 -->
+    <div class="section-box">
+      <h3>🏠 已建造的房间</h3>
+      <div id="room-list"></div>
+      
+      <h3 style="margin-top: 15px;">🎁 特殊珍藏</h3>
+      <div id="special-item-list"></div>
     </div>
 
     <!-- 动物朋友 -->
