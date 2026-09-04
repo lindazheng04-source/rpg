@@ -1,1207 +1,352 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>放置 RPG</title>
-    <style>
-        :root {
-            --bg-color: #1a1a1a;
-            --card-bg: #2d2d2d;
-            --text-color: #e0e0e0;
-            --subtext: #aaa;
-            --accent: #ff9800;
-            --border: #444;
-            --hp-color: #e53935;
-            --exp-color: #4caf50;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 10px;
-            font-size: 14px;
-        }
-        .container { max-width: 600px; margin: 0 auto; }
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 10px;
-        }
-        .title { font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .equip-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center; }
-        .equip-slot { background: #222; padding: 6px; border-radius: 4px; border: 1px solid #333; }
-        .equip-slot .label { font-size: 0.7rem; color: var(--subtext); }
-        .equip-slot .val { font-weight: bold; font-size: 0.85rem; }
-        
-        .bar-container { background: #444; height: 12px; border-radius: 6px; overflow: hidden; position: relative; margin: 4px 0; }
-        .bar-fill { height: 100%; transition: width 0.3s; }
-        .bar-text { position: absolute; width: 100%; text-align: center; font-size: 0.65rem; line-height: 12px; top: 0; color: #fff; text-shadow: 0 0 2px #000; }
-        
-        #log-box { height: 120px; overflow-y: auto; background: #151515; border-radius: 4px; padding: 6px; font-family: monospace; font-size: 0.75rem; }
-        .log-item { margin-bottom: 2px; }
-        
-        .tabs { display: flex; gap: 4px; margin-bottom: 8px; }
-        .tab-btn { flex: 1; padding: 6px; background: #333; border: none; color: #fff; border-radius: 4px; cursor: pointer; }
-        .tab-btn.active { background: var(--accent); color: #000; font-weight: bold; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        
-        button { background: #444; color: #fff; border: 1px solid #555; padding: 6px 12px; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 4px; }
-        button:hover { background: #555; }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-        button.active { background: #c62828; }
-        .btn-sm { width: auto; padding: 2px 8px; font-size: 0.75rem; margin-top: 0; }
-        .btn-off { background: #222; color: #666; border-color: #333; }
-        
-        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px dashed #333; }
-        .item-desc { font-size: 0.7rem; color: var(--subtext); }
-        .btn-group { display: flex; gap: 4px; }
-        
-        .codex-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
-        .codex-card { background: #222; padding: 6px; border-radius: 4px; font-size: 0.75rem; border: 1px solid #333; }
-        .codex-card.locked { opacity: 0.4; }
-        
-        .highlight { color: #ffca28; }
-        .crit { color: #ff5722; font-weight: bold; }
-        .death { color: #ef5350; font-weight: bold; }
-        .gain { color: #66bb6a; }
-        .rare { color: #ab47bc; font-weight: bold; }
-        .weather { color: #29b6f6; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>小精灵的森林小屋</title>
+  <style>
+    :root {
+      --bg-color: #f4efde;
+      --panel-bg: #e2dac2;
+      --text-color: #383227;
+      --accent-color: #5c7457;
+      --border-color: #b8ac90;
+      --hover-color: #485c44;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: system-ui, -apple-system, sans-serif;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 650px) {
+      .container { grid-template-columns: 1fr; }
+    }
+
+    h2, h3 { margin-top: 0; color: var(--accent-color); }
+
+    .card {
+      background-color: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .log-container {
+      height: 380px;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      background-color: #fcfaf2;
+      padding: 12px;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column-reverse;
+    }
+
+    .log-entry {
+      margin-bottom: 8px;
+      font-size: 0.9em;
+      border-bottom: 1px dashed #e2dac2;
+      padding-bottom: 4px;
+    }
+
+    .time-stamp {
+      color: #887d65;
+      font-size: 0.85em;
+      margin-right: 6px;
+    }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    button {
+      background-color: var(--accent-color);
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9em;
+      transition: background-color 0.2s;
+    }
+
+    button:hover { background-color: var(--hover-color); }
+    button:disabled { background-color: #999; cursor: not-allowed; opacity: 0.6; }
+
+    .stat-label { font-weight: bold; }
+    .resource-list { list-style: none; padding: 0; margin: 0; }
+    .resource-list li { display: flex; justify-content: space-between; margin-bottom: 4px; }
+  </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- 玩家基本信息 -->
+  <!-- 左侧：精灵状态与资源面板 -->
+  <div>
     <div class="card">
-        <div style="display:flex; justify-content:space-between;">
-            <span id="player-level" style="font-weight:bold; color:var(--accent);">Lv.1</span>
-            <span>💰 <span id="player-gold">0</span> | SP: <span id="player-sp">0</span></span>
-        </div>
-        <div class="grid-2" style="margin-top:6px; font-size:0.8rem;">
-            <div>⚔️ 攻击: <span id="player-atk">0</span> <span id="crit-chance" style="font-size:0.65rem; color:var(--subtext);">(暴击10%)</span></div>
-            <div>🛡️ 防御: <span id="player-def">0</span></div>
-            <div>☠️ 阵亡次数: <span id="player-deaths">0</span></div>
-            <div>🎒 背包: <span id="bag-capacity">0/15</span></div>
-        </div>
-        <div style="margin-top:6px;">
-            <div class="bar-container">
-                <div id="hp-bar" class="bar-fill" style="background:var(--hp-color); width:100%;"></div>
-                <div id="hp-text" class="bar-text">100/100</div>
-            </div>
-            <div class="bar-container">
-                <div id="exp-bar" class="bar-fill" style="background:var(--exp-color); width:0%;"></div>
-                <div id="exp-text" class="bar-text">0/50</div>
-            </div>
-        </div>
+      <h2>小精灵状态</h2>
+      <p><span class="stat-label">名字：</span>四岁的小精灵</p>
+      <p><span class="stat-label">居所：</span><span id="house-name">树枝搭的小草棚</span></p>
+      <p><span class="stat-label">体力：</span><span id="stamina">100</span> / 100</p>
     </div>
 
-    <!-- 装备与魔宠界面卡片 -->
     <div class="card">
-        <div class="title" style="font-size:0.9rem;">🗡️ 当前装备 & 魔宠</div>
-        <div class="equip-grid">
-            <div class="equip-slot">
-                <div class="label">武器</div>
-                <div class="val" id="equip-weapon-name">新手木剑</div>
-                <div style="font-size:0.65rem; color:var(--subtext);" id="equip-weapon-stat">攻击 +2</div>
-            </div>
-            <div class="equip-slot">
-                <div class="label">防具</div>
-                <div class="val" id="equip-armor-name">破旧布衣</div>
-                <div style="font-size:0.65rem; color:var(--subtext);" id="equip-armor-stat">防御 +1</div>
-            </div>
-            <div class="equip-slot">
-                <div class="label">契约魔宠</div>
-                <div class="val" id="equip-pet-name">无</div>
-                <div style="font-size:0.65rem; color:var(--subtext);" id="equip-pet-stat">无加成</div>
-            </div>
-        </div>
+      <h3>物资储藏</h3>
+      <ul class="resource-list">
+        <li><span>树枝:</span> <span id="res-wood">0</span></li>
+        <li><span>干草:</span> <span id="res-grass">0</span></li>
+        <li><span>石头:</span> <span id="res-stone">0</span></li>
+        <li><span>野果:</span> <span id="res-fruit">0</span></li>
+        <li><span>小木棍(武器):</span> <span id="res-weapon">0</span></li>
+        <li><span>奇特小礼物:</span> <span id="res-gift">0</span></li>
+      </ul>
     </div>
+  </div>
 
-    <!-- 当前战斗与状态信息 -->
+  <!-- 右侧：日志与动作操作 -->
+  <div>
     <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <select id="region-select" onchange="changeRegion()" style="background:#222; color:#fff; border:1px solid #444; padding:2px 6px; border-radius:4px; font-size:0.8rem;"></select>
-            <span id="weather-tag" style="font-size:0.75rem; color:var(--subtext);">晴空</span>
-        </div>
-        
-        <div style="background:#222; padding:8px; border-radius:4px; margin-bottom:8px;">
-            <div style="display:flex; justify-content:space-between; font-weight:bold;">
-                <span id="monster-name">寻找魔物中...</span>
-                <span id="monster-hp-text" style="font-size:0.8rem; color:var(--hp-color);">HP: 0/0</span>
-            </div>
-            <div class="bar-container" style="margin-top:4px;">
-                <div id="monster-hp-bar" class="bar-fill" style="background:var(--hp-color); width:0%;"></div>
-            </div>
-        </div>
-
-        <button id="toggle-btn" type="button" onclick="toggleAutoBattle()">开始挂机探索</button>
+      <h2>森林日记</h2>
+      <div id="log-box" class="log-container"></div>
     </div>
 
-    <!-- 战报日志 -->
     <div class="card">
-        <div class="title" style="font-size:0.8rem;">📜 冒险战报</div>
-        <div id="log-box"></div>
+      <h3>小精灵的行动</h3>
+      <div class="action-grid">
+        <button id="btn-gather" onclick="manualGather()">亲自收集物资</button>
+        <button id="btn-craft-weapon" onclick="craftWeapon()">削一把木棍</button>
+        <button id="btn-explore" onclick="goExplore()">前往森林深处远足</button>
+        <button id="btn-upgrade" onclick="upgradeHouse()">扩建房子</button>
+      </div>
+      <div style="margin-top: 15px; font-size: 0.85em; color: #666; text-align: right;">
+        * 游戏自动进行背景挂机与自动保存
+        <button onclick="resetData()" style="background:#b33939; margin-left:10px; padding: 2px 6px;">重置存档</button>
+      </div>
     </div>
-
-    <!-- 底部 Tab 选项卡导航 -->
-    <div class="tabs">
-        <button type="button" class="tab-btn active" onclick="switchTab('bag', this)">🎒 背包</button>
-        <button type="button" class="tab-btn" onclick="switchTab('craft', this)">🧪 炼金</button>
-        <button type="button" class="tab-btn" onclick="switchTab('skills', this)">⚡ 技能</button>
-        <button type="button" class="tab-btn" onclick="switchTab('shop', this)">🛒 商店</button>
-        <button type="button" class="tab-btn" onclick="switchTab('codex', this)">📖 图鉴</button>
-    </div>
-
-    <!-- TAB 1: 背包 -->
-    <div id="tab-bag" class="tab-content card active">
-        <div id="bag-list"></div>
-    </div>
-
-    <!-- TAB 2: 炼金与锻造 -->
-    <div id="tab-craft" class="tab-content card">
-        <div class="title" style="font-size:0.85rem;">🔨 装备强化与洗炼</div>
-        <div style="background:#222; padding:8px; border-radius:4px; margin-bottom:10px;">
-            <div style="font-weight:bold; color:var(--accent); margin-bottom:4px;">🗡️ 当前武器</div>
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <span id="forge-weapon-name" style="font-weight:bold;">新手木剑</span>
-                    <div id="forge-weapon-desc" class="item-desc">攻击 +2</div>
-                </div>
-                <div class="btn-group">
-                    <button type="button" class="btn-sm" onclick="enhanceEquipment('weapon')">强化 (💰渐进 + 精炼铁)</button>
-                    <button type="button" class="btn-sm" onclick="reforgeEquipment('weapon')">洗炼 (200💰 + 1火山赤石)</button>
-                </div>
-            </div>
-            <hr style="border:0; border-top:1px dashed #333; margin:8px 0;">
-            <div style="font-weight:bold; color:var(--accent); margin-bottom:4px;">🛡️ 当前防具</div>
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <span id="forge-armor-name" style="font-weight:bold;">破旧布衣</span>
-                    <div id="forge-armor-desc" class="item-desc">防御 +1</div>
-                </div>
-                <div class="btn-group">
-                    <button type="button" class="btn-sm" onclick="enhanceEquipment('armor')">强化 (💰渐进 + 精炼铁)</button>
-                    <button type="button" class="btn-sm" onclick="reforgeEquipment('armor')">洗炼 (200💰 + 1火山赤石)</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="title" style="font-size:0.85rem;">🧪 配方炼金</div>
-        <div id="craft-list"></div>
-    </div>
-
-    <!-- TAB 3: 技能 -->
-    <div id="tab-skills" class="tab-content card">
-        <div class="title" style="font-size:0.85rem; display:flex; justify-content:space-between;">
-            <span>⚡ 技能学习与升级</span>
-            <span>可用 SP: <span id="skill-tab-sp" style="color:var(--accent);">0</span></span>
-        </div>
-        <div id="skill-list"></div>
-    </div>
-
-    <!-- TAB 4: 商店 -->
-    <div id="tab-shop" class="tab-content card">
-        <div class="item-row">
-            <div>
-                <div>🧪 小型生命药水</div>
-                <div class="item-desc">恢复 50 点 HP</div>
-            </div>
-            <button type="button" class="btn-sm" onclick="buyPotion('small', 1, 15)">购买 (15💰)</button>
-        </div>
-        <div class="item-row">
-            <div>
-                <div>🧪 大特效药水</div>
-                <div class="item-desc">恢复 180 点 HP</div>
-            </div>
-            <button type="button" class="btn-sm" onclick="buyPotion('large', 1, 50)">购买 (50💰)</button>
-        </div>
-        <div class="item-row">
-            <div>
-                <div>🎒 扩容背包 (+5格)</div>
-                <div class="item-desc">扩大物品储存上限</div>
-            </div>
-            <button id="btn-bag-1" type="button" class="btn-sm" onclick="buyBagUpgrade(1, 150, 5)">购买 (150💰)</button>
-        </div>
-        <div class="item-row">
-            <div>
-                <div>🎒 高级旅行背包 (+10格)</div>
-                <div class="item-desc">大幅拓展储存上限</div>
-            </div>
-            <button id="btn-bag-2" type="button" class="btn-sm" onclick="buyBagUpgrade(2, 500, 10)">购买 (500💰)</button>
-        </div>
-        <div class="item-row">
-            <div>
-                <div>⚡ 狂暴药剂</div>
-                <div class="item-desc">永久提升 5% 暴击率</div>
-            </div>
-            <button type="button" class="btn-sm" onclick="buyElixir('crit', 1000)">购买 (1000💰)</button>
-        </div>
-        <div class="item-row">
-            <div>
-                <div>🐾 契约：精灵史莱姆</div>
-                <div class="item-desc">每轮回复 8 点 HP (战败会阵亡)</div>
-            </div>
-            <button type="button" class="btn-sm" onclick="adoptPet('精灵史莱姆', 'heal', 8, 200)">签约 (200💰)</button>
-        </div>
-        <div class="item-row">
-            <div>
-                <div>🐾 契约：寻宝狐狸</div>
-                <div class="item-desc">提升 8% 暴击率 (战败会阵亡)</div>
-            </div>
-            <button type="button" class="btn-sm" onclick="adoptPet('寻宝狐狸', 'crit', 8, 350)">签约 (350💰)</button>
-        </div>
-        <div class="item-row">
-            <div>
-                <div>🐾 契约：小幼龙</div>
-                <div class="item-desc">增加 15 点基础攻击力 (战败会阵亡)</div>
-            </div>
-            <button type="button" class="btn-sm" onclick="adoptPet('小幼龙', 'atk', 15, 600)">签约 (600💰)</button>
-        </div>
-    </div>
-
-    <!-- TAB 5: 图鉴 -->
-    <div id="tab-codex" class="tab-content card">
-        <div class="title" style="font-size:0.8rem;">👾 击杀魔物图鉴</div>
-        <div id="codex-monsters" class="codex-grid" style="margin-bottom:10px;"></div>
-        
-        <div class="title" style="font-size:0.8rem;">🛡️ 装备图鉴</div>
-        <div id="codex-equips" class="codex-grid" style="margin-bottom:10px;"></div>
-
-        <div class="title" style="font-size:0.8rem;">💎 材料图鉴</div>
-        <div id="codex-materials" class="codex-grid" style="margin-bottom:10px;"></div>
-
-        <div class="title" style="font-size:0.8rem;">🧪 炼金产物图鉴</div>
-        <div id="codex-crafts" class="codex-grid" style="margin-bottom:10px;"></div>
-
-        <div class="title" style="font-size:0.8rem;">🎒 道具使用历史</div>
-        <div id="codex-bag-history" class="codex-grid"></div>
-
-        <button type="button" onclick="resetSave()" style="margin-top:15px; background:#b71c1c;">⚠️ 清空并重置游戏数据</button>
-    </div>
+  </div>
 </div>
 
 <script>
-    function getRandomInt(min, max) {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
+  // 游戏核心状态
+  let gameState = {
+    wood: 0,
+    grass: 0,
+    stone: 0,
+    fruit: 5,
+    weapon: 0,
+    gift: 0,
+    stamina: 100,
+    houseLevel: 0,
+    lastTime: Date.now()
+  };
+
+  const houseNames = [
+    "树枝搭的小草棚",
+    "遮风避雨的树洞",
+    "温馨的木板小屋",
+    "带有小花园的森林大大城堡"
+  ];
+
+  const houseCosts = [
+    { wood: 15, grass: 15, stone: 0 },   // 升级到等级1 (树洞)
+    { wood: 40, grass: 20, stone: 20 },  // 升级到等级2 (木屋)
+    { wood: 100, grass: 50, stone: 80 }  // 升级到等级3 (城堡)
+  ];
+
+  // 日志打印功能
+  function addLog(text) {
+    const logBox = document.getElementById('log-box');
+    const timeStr = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    entry.innerHTML = `<span class="time-stamp">[${timeStr}]</span>${text}`;
+    logBox.insertBefore(entry, logBox.firstChild);
+  }
+
+  // 界面刷新
+  function updateUI() {
+    document.getElementById('res-wood').innerText = gameState.wood;
+    document.getElementById('res-grass').innerText = gameState.grass;
+    document.getElementById('res-stone').innerText = gameState.stone;
+    document.getElementById('res-fruit').innerText = gameState.fruit;
+    document.getElementById('res-weapon').innerText = gameState.weapon;
+    document.getElementById('res-gift').innerText = gameState.gift;
+    document.getElementById('stamina').innerText = gameState.stamina;
+    document.getElementById('house-name').innerText = houseNames[gameState.houseLevel];
+
+    // 更新按钮状态
+    const btnUpgrade = document.getElementById('btn-upgrade');
+    if (gameState.houseLevel >= houseCosts.length) {
+      btnUpgrade.innerText = "房屋已达顶级";
+      btnUpgrade.disabled = true;
+    } else {
+      const cost = houseCosts[gameState.houseLevel];
+      btnUpgrade.innerText = `扩建房子 (${cost.wood}木 ${cost.grass}草 ${cost.stone}石)`;
+      btnUpgrade.disabled = !(gameState.wood >= cost.wood && gameState.grass >= cost.grass && gameState.stone >= cost.stone);
     }
+  }
 
-    const defaultPlayer = {
-        level: 1, hp: 100, maxHp: 100, atk: 8, def: 2, exp: 0, maxExp: 50, gold: 0, kills: 0, deaths: 0,
-        potionsSmall: 2, potionsLarge: 0, critRate: 10, currentRegion: 0, maxBagCapacity: 15,
-        sp: 0,
-        bagUpgradesPurchased: [],
-        currentWeapon: { name: "新手木剑", stat: 2, level: 0, quality: "普通", affixes: [] },
-        currentArmor: { name: "破旧布衣", stat: 1, level: 0, quality: "普通", affixes: [] },
-        currentPet: { name: "无", type: "none", val: 0 }
-    };
-    let player = JSON.parse(JSON.stringify(defaultPlayer));
-
-    const possibleAffixes = [
-        { name: "生命上限", type: "hp", valMin: 30, valMax: 100, unit: "" },
-        { name: "额外攻击", type: "atk", valMin: 3, valMax: 15, unit: "" },
-        { name: "额外防御", type: "def", valMin: 2, valMax: 10, unit: "" },
-        { name: "暴击加成", type: "crit", valMin: 3, valMax: 8, unit: "%" },
-        { name: "吸血效果", type: "vamp", valMin: 2, valMax: 5, unit: "%" }
-    ];
-
-    const defaultSkills = { heavy_strike: 0, toughness: 0, vampire: 0, lucky_star: 0, berserk: 0, iron_shield: 0 };
-    let skills = JSON.parse(JSON.stringify(defaultSkills));
-
-    const skillDefs = [
-        { 
-            id: "heavy_strike", 
-            name: "💥 强力重击", 
-            maxLv: 5,
-            getDesc: (lv) => `每 3 轮必定触发一次重击，造成 ${(150 + (lv || 1) * 50)}% 物理伤害`
-        },
-        { 
-            id: "toughness", 
-            name: "🛡️ 坚韧血脉", 
-            maxLv: 5,
-            getDesc: (lv) => `生命上限永久提升 ${(lv || 1) * 15}%`
-        },
-        { 
-            id: "vampire", 
-            name: "🩸 汲血杀戮", 
-            maxLv: 5,
-            getDesc: (lv) => `攻击造成伤害的 ${(lv || 1) * 5}% 转化为自身 HP 恢复`
-        },
-        { 
-            id: "lucky_star", 
-            name: "🌟 幸运星", 
-            maxLv: 5,
-            getDesc: (lv) => `暴击率 +${(lv || 1) * 5}%，且小概率提升材料掉率`
-        },
-        { 
-            id: "berserk", 
-            name: "🔥 狂暴战意", 
-            maxLv: 5,
-            getDesc: (lv) => `攻击力额外增加 ${(lv || 1) * 8} 点`
-        },
-        { 
-            id: "iron_shield", 
-            name: "🧱 铁壁守御", 
-            maxLv: 5,
-            getDesc: (lv) => `防御力额外增加 ${(lv || 1) * 5} 点`
-        }
-    ];
-
-    const defaultInventory = {
-        slime_gel: 0, goblin_cloth: 0, iron_ore: 0, bone: 0,
-        volcano_stone: 0, dragon_scale: 0, refined_iron: 0
-    };
-    let inventory = JSON.parse(JSON.stringify(defaultInventory));
-
-    const itemNames = {
-        slime_gel: "💧 史莱姆粘液", goblin_cloth: "📜 哥布林布片", iron_ore: "🪨 铁矿石",
-        bone: "🦴 碎裂骨头", volcano_stone: "🔥 火山赤石", dragon_scale: "🛡️ 熔岩龙鳞",
-        refined_iron: "🧱 精炼铁块"
-    };
-
-    const weatherList = [
-        { id: "clear", name: "☀️ 晴空", desc: "标准战斗环境，无额外效果。" },
-        { id: "rain", name: "🌧️ 暴风雨", desc: "视线变差，双方伤害小幅浮动下降 20%。" },
-        { id: "fog", name: "🌫️ 浓雾", desc: "魔物掉落与金币增加 30%。" },
-        { id: "bloodmoon", name: "🌙 血月", desc: "魔物攻击力 +50%，但击杀经验值 +100%！" }
-    ];
-    let currentWeather = weatherList[0];
-    let weatherTurnCounter = 0;
-
-    let autoCraftSettings = {};
-    let codexData = {
-        monsters: new Set(),
-        equips: new Set(["新手木剑", "破旧布衣"]),
-        materials: new Set(),
-        crafts: new Set(),
-        bagHistory: new Set(["小型生命药水"])
-    };
-
-    const regions = [
-        {
-            name: "【危险度:低】静谧郊野",
-            monsters: [
-                { name: "绿色史莱姆", hp: 35, atk: 5, exp: 15, gold: 6, drop: "slime_gel" },
-                { name: "迷失哥布林", hp: 60, atk: 10, exp: 25, gold: 12, drop: "goblin_cloth" },
-                { name: "👑 森林蛛后 (区域BOSS)", hp: 200, atk: 22, exp: 100, gold: 80, drop: "goblin_cloth", isBoss: true }
-            ]
-        },
-        {
-            name: "【危险度:中】幽暗矿坑",
-            monsters: [
-                { name: "洞窟矿石怪", hp: 120, atk: 20, exp: 50, gold: 25, drop: "iron_ore" },
-                { name: "矿坑食尸鬼", hp: 180, atk: 30, exp: 80, gold: 40, drop: "bone" },
-                { name: "👑 巨石傀儡 (区域BOSS)", hp: 550, atk: 50, exp: 300, gold: 250, drop: "iron_ore", isBoss: true }
-            ]
-        },
-        {
-            name: "【危险度:高】骷髅废墟",
-            monsters: [
-                { name: "骷髅剑士", hp: 320, atk: 55, exp: 140, gold: 70, drop: "bone" },
-                { name: "幽灵巫师", hp: 450, atk: 80, exp: 220, gold: 110, drop: "volcano_stone" },
-                { name: "👑 巫妖领主 (区域BOSS)", hp: 1200, atk: 120, exp: 800, gold: 600, drop: "volcano_stone", isBoss: true }
-            ]
-        },
-        {
-            name: "【危险度:极危】炽热火山",
-            monsters: [
-                { name: "熔岩火元素", hp: 800, atk: 140, exp: 400, gold: 200, drop: "volcano_stone" },
-                { name: "火山幼龙", hp: 1400, atk: 210, exp: 700, gold: 400, drop: "dragon_scale" },
-                { name: "👑 灭世红龙 (区域BOSS)", hp: 3500, atk: 380, exp: 2500, gold: 1500, drop: "dragon_scale", isBoss: true }
-            ]
-        },
-        {
-            name: "【危险度:噩梦】星空遗迹",
-            monsters: [
-                { name: "星空噬体", hp: 2500, atk: 350, exp: 1200, gold: 800, drop: "refined_iron" },
-                { name: "虚空守卫", hp: 4200, atk: 520, exp: 2000, gold: 1300, drop: "dragon_scale" },
-                { name: "👑 星灵主宰 (区域BOSS)", hp: 10000, atk: 950, exp: 8000, gold: 5000, drop: "dragon_scale", isBoss: true }
-            ]
-        }
-    ];
-
-    const craftRecipes = [
-        { id: "potion_large", name: "🧪 大特效药水 x2", materials: { slime_gel: 3 }, type: "item", target: "potionsLarge", amount: 2 },
-        { id: "refined_iron", name: "🧱 精炼铁块", materials: { iron_ore: 3 }, type: "mat", target: "refined_iron", amount: 1 },
-        { id: "equip_sword", name: "⚔️ 烈焰灭世剑", materials: { refined_iron: 3, volcano_stone: 3 }, type: "weapon", stat: 65 },
-        { id: "equip_armor", name: "🛡️ 熔岩龙鳞铠", materials: { dragon_scale: 3, refined_iron: 2 }, type: "armor", stat: 50 }
-    ];
-
-    let currentMonster = null;
-    let isAuto = false;
-    let timer = null;
-    let attackTurnCount = 0;
-
-    const itemPrices = {
-        slime_gel: 2, goblin_cloth: 5, iron_ore: 10, bone: 15,
-        volcano_stone: 30, dragon_scale: 80, refined_iron: 25
-    };
-
-    function sellItem(itemKey) {
-        if (inventory[itemKey] > 0) {
-            inventory[itemKey]--;
-            let price = itemPrices[itemKey] || 1;
-            player.gold += price;
-            addLog(`💰 出售了 1 个 <span class="highlight">${itemNames[itemKey]}</span>，获得 ${price} 金币！`);
-            saveGame();
-            updateUI();
-        } 
+  // 手动收集
+  function manualGather() {
+    if (gameState.stamina < 5) {
+      addLog("小精灵太累了，先休息一下吧...");
+      return;
     }
-
-    function enhanceEquipment(type) {
-        let equip = type === 'weapon' ? player.currentWeapon : player.currentArmor;
-        equip.level = equip.level || 0;
-
-        if (equip.level >= 10) { alert("该装备已达到最大强化等级 (+10)！"); return; }
-        
-        let goldCost = (equip.level + 1) * 150;
-        let ironCost = Math.max(1, Math.floor((equip.level + 1) / 2));
-
-        if (player.gold < goldCost) { alert(`金币不足！强化需要 ${goldCost} 金币。`); return; }
-        if ((inventory.refined_iron || 0) < ironCost) { alert(`材料不足！强化需要精炼铁块 x${ironCost}。`); return; }
-        
-        let successRate = Math.max(20, 100 - equip.level * 8); 
-        let roll = getRandomInt(1, 100);
-        
-        player.gold -= goldCost;
-        inventory.refined_iron -= ironCost;
-
-        if (roll <= successRate) {
-            equip.level++;
-            equip.stat += type === 'weapon' ? 3 : 2;
-            addLog(`🔨 <span class="gain">强化成功！</span> 【${equip.name}】提升至 +${equip.level}！`);
-        } else {
-            addLog(`💥 <span class="death">强化失败！</span> 浪费了材料，强化等级未变。`);
-        }
-
-        saveGame();
-        updateUI();
-    }
-
-    function reforgeEquipment(type) {
-        let equip = type === 'weapon' ? player.currentWeapon : player.currentArmor;
-        let goldCost = 200;
-
-        if (player.gold < goldCost) { alert(`金币不足！洗炼需要 ${goldCost} 金币。`); return; }
-        if ((inventory.volcano_stone || 0) < 1) { alert("材料不足！洗炼需要 火山赤石 x1。"); return; }
-
-        player.gold -= goldCost;
-        inventory.volcano_stone--;
-
-        let affixCount = Math.random() < 0.4 ? 2 : 1;
-        let newAffixes = [];
-
-        for (let i = 0; i < affixCount; i++) {
-            let template = possibleAffixes[getRandomInt(0, possibleAffixes.length - 1)];
-            let val = getRandomInt(template.valMin, template.valMax);
-            newAffixes.push({ name: template.name, type: template.type, val: val, unit: template.unit });
-        }
-
-        equip.affixes = newAffixes;
-        addLog(`✨ <span class="rare">洗炼成功！</span> 【${equip.name}】获得了全新的附加属性！`);
-    
-        recalculateStats();
-        saveGame();
-        updateUI();
-    }
-
-    function getEquipAffixBonus(attrType) {
-        let total = 0;
-        [player.currentWeapon, player.currentArmor].forEach(equip => {
-            if (equip && equip.affixes) {
-                equip.affixes.forEach(aff => {
-                    if (aff.type === attrType) total += aff.val;
-                });
-            }
-        });
-        return total;
-    }
-
-    function recalculateStats() {
-        let hpBonus = getEquipAffixBonus('hp');
-        let skillToughBonus = 1 + ((skills.toughness || 0) * 0.15);
-        player.maxHp = Math.floor(((100 + (player.level - 1) * 30) + hpBonus) * skillToughBonus);
-        player.hp = Math.min(player.hp, player.maxHp);
-    }
-
-    function saveGame() {
-        let saveData = {
-            player, inventory, skills, autoCraftSettings,
-            codexData: {
-                monsters: Array.from(codexData.monsters),
-                equips: Array.from(codexData.equips),
-                materials: Array.from(codexData.materials),
-                crafts: Array.from(codexData.crafts),
-                bagHistory: Array.from(codexData.bagHistory)
-            }
-        };
-        localStorage.setItem("rpg_save_v9", JSON.stringify(saveData));
-    }
-
-    function loadGame() {
-        let data = localStorage.getItem("rpg_save_v9");
-        if (data) {
-            try {
-                let parsed = JSON.parse(data);
-                player = Object.assign({}, defaultPlayer, parsed.player || {});
-                inventory = Object.assign({}, defaultInventory, parsed.inventory || {});
-                skills = Object.assign({}, defaultSkills, parsed.skills || {});
-                autoCraftSettings = parsed.autoCraftSettings || {};
-
-                if (parsed.codexData) {
-                    codexData.monsters = new Set(parsed.codexData.monsters || []);
-                    codexData.equips = new Set(parsed.codexData.equips || []);
-                    codexData.materials = new Set(parsed.codexData.materials || []);
-                    codexData.crafts = new Set(parsed.codexData.crafts || []);
-                    codexData.bagHistory = new Set(parsed.codexData.bagHistory || []);
-                }
-                addLog(`💾 自动加载本地进度成功！`);
-            } catch (e) {
-                console.error("存档解析失败", e);
-            }
-        }
-    }
-
-    function resetSave() {
-        if (confirm("确定重置进度吗？所有属性与进度将被重置！")) {
-            localStorage.removeItem("rpg_save_v9");
-            location.reload();
-        }
-    }
-
-    function spawnMonster() {
-        let currRegIndex = player.currentRegion;
-        let regionMonsters = regions[currRegIndex].monsters;
-
-        let normalMonsters = regionMonsters.filter(m => !m.isBoss);
-        let bossMonsters = regionMonsters.filter(m => m.isBoss);
-
-        if (currRegIndex > 0 && Math.random() < 0.25) {
-            let prevRegIndex = Math.floor(Math.random() * currRegIndex);
-            normalMonsters = normalMonsters.concat(regions[prevRegIndex].monsters.filter(m => !m.isBoss));
-        }
-
-        let base = null;
-        if (bossMonsters.length > 0 && Math.random() < 0.05) {
-            base = bossMonsters[Math.floor(Math.random() * bossMonsters.length)];
-            addLog(`<span class="death">⚠️ 警报！你踏入了危险领地，遇到了顶级 BOSS !</span>`);
-        } else {
-            base = normalMonsters[Math.floor(Math.random() * normalMonsters.length)];
-        }
-
-        let hpFluct = getRandomInt(Math.floor(base.hp * 0.85), Math.ceil(base.hp * 1.15));
-        let atkFluct = getRandomInt(Math.floor(base.atk * 0.85), Math.ceil(base.atk * 1.15));
-        let expFluct = getRandomInt(Math.floor(base.exp * 0.9), Math.ceil(base.exp * 1.1));
-        let goldFluct = Math.floor(getRandomInt(Math.floor(base.gold * 0.8), Math.ceil(base.gold * 1.2)));
-
-        let dropItem = base.drop;
-        if (base.drop && Math.random() < 0.2) {
-            let randomMatPool = ["slime_gel", "goblin_cloth", "iron_ore"];
-            dropItem = randomMatPool[Math.floor(Math.random() * randomMatPool.length)];
-        }
-
-        currentMonster = {
-            name: base.name,
-            maxHp: hpFluct,
-            hp: hpFluct,
-            atk: atkFluct,
-            exp: expFluct,
-            gold: goldFluct,
-            drop: dropItem,
-            isBoss: base.isBoss || false
-        };
-
-        addLog(`遭遇了 <span class="highlight">${currentMonster.name}</span> (HP:${currentMonster.hp} 攻:${currentMonster.atk}) !`);
-        updateUI();
-    }
-
-    function gameLoop() {
-        if (!isAuto) return;
-
-        processAutoCrafting();
-        checkWeatherChange();
-
-        if (!currentMonster || currentMonster.hp <= 0) {
-            spawnMonster();
-            timer = setTimeout(gameLoop, 1000);
-            return;
-        }
-
-        if (player.hp < player.maxHp * 0.45) {
-            if (player.potionsLarge > 0) {
-                player.potionsLarge--;
-                player.hp = Math.min(player.maxHp, player.hp + 180);
-                addLog(`🧪 使用大药水！恢复 180 HP`);
-            } else if (player.potionsSmall > 0) {
-                player.potionsSmall--;
-                player.hp = Math.min(player.maxHp, player.hp + 50);
-                addLog(`🧪 使用小药水！恢复 50 HP`);
-            }
-        }
-
-        if (player.currentPet.type === 'heal') player.hp = Math.min(player.maxHp, player.hp + player.currentPet.val);
-
-        let extraAtk = getEquipAffixBonus('atk');
-        let extraDef = getEquipAffixBonus('def');
-        let extraCrit = getEquipAffixBonus('crit');
-        let extraVamp = getEquipAffixBonus('vamp');
-        
-        let skillAtkBonus = (skills.berserk || 0) * 8;
-        let skillDefBonus = (skills.iron_shield || 0) * 5;
-        
-        let totalAtk = player.atk + player.currentWeapon.stat + extraAtk + (player.currentPet.type === 'atk' ? player.currentPet.val : 0) + skillAtkBonus;
-        let totalCrit = player.critRate + extraCrit + (player.currentPet.type === 'crit' ? player.currentPet.val : 0) + ((skills.lucky_star || 0) * 5);
-        let isCrit = Math.random() * 100 < totalCrit;
-        
-        attackTurnCount++;
-        let isHeavyStrike = skills.heavy_strike > 0 && (attackTurnCount % 3 === 0);
-        let heavyMultiplier = 1.5 + (skills.heavy_strike * 0.5);
-        
-        let damageToMonster = totalAtk;
-        if (isHeavyStrike) damageToMonster *= heavyMultiplier;
-        if (isCrit) damageToMonster *= 1.8;
-        if (currentWeather.id === "rain") damageToMonster *= 0.8;
-
-        damageToMonster = Math.floor(damageToMonster);
-        currentMonster.hp -= damageToMonster;
-
-        let vampireRate = ((skills.vampire || 0) * 0.05) + (extraVamp / 100);
-        if (vampireRate > 0) {
-            let healAmt = Math.floor(damageToMonster * vampireRate);
-            player.hp = Math.min(player.maxHp, player.hp + healAmt);
-        }
-
-        if (currentMonster.hp <= 0) {
-            currentMonster.hp = 0;
-            updateUI();
-
-            let gainExp = Math.floor(currentMonster.exp * (currentWeather.id === "bloodmoon" ? 2.0 : 1.0));
-            let gainGold = Math.floor(currentMonster.gold * (currentWeather.id === "fog" ? 1.3 : 1.0));
-
-            addLog(`击败 <span class="highlight">${currentMonster.name}</span>！经验+${gainExp}，金币+${gainGold}`);
-
-            codexData.monsters.add(currentMonster.name);
-            player.exp += gainExp;
-            player.gold += gainGold;
-            player.kills++;
-
-            let dropRate = 0.75 + (skills.lucky_star ? 0.15 : 0);
-            if (currentMonster.drop && Math.random() < dropRate) {
-                if (getCurrentBagCount() < player.maxBagCapacity || inventory[currentMonster.drop] > 0) {
-                    inventory[currentMonster.drop]++;
-                    codexData.materials.add(itemNames[currentMonster.drop]);
-                    codexData.bagHistory.add(itemNames[currentMonster.drop]);
-                    addLog(`✨ 拾获：<span class="highlight">${itemNames[currentMonster.drop]}</span>`);
-                } else {
-                    addLog(`⚠️ 背包容量已满！错失了 <span class="highlight">${itemNames[currentMonster.drop]}</span>`);
-                }
-            }
-
-            if (currentMonster.isBoss || Math.random() < 0.1) {
-                dropRandomEquipment(currentMonster.isBoss);
-            }
-
-            checkLevelUp();
-            currentMonster = null;
-            saveGame();
-            timer = setTimeout(gameLoop, 1000);
-        } else {
-            let totalDef = player.def + player.currentArmor.stat + extraDef + skillDefBonus;
-            let mAtk = currentMonster.atk * (currentWeather.id === "bloodmoon" ? 1.5 : 1.0);
-            let damage = Math.max(1, Math.floor(mAtk - totalDef));
-            player.hp -= damage;
-
-            if (isHeavyStrike) addLog(`<span class="crit">⚡ 触发【重击】！造成 ${damageToMonster} 伤害！</span>`);
-            else if (isCrit) addLog(`<span class="crit">💥 触发暴击！造成 ${damageToMonster} 伤害！</span>`);
-
-            if (player.hp <= 0) {
-                applyDeathPenalty();
-                currentMonster = null;
-                saveGame();
-                timer = setTimeout(gameLoop, 2500);
-            } else {
-                timer = setTimeout(gameLoop, 800);
-            }
-        }
-        updateUI();
-    }
-
-    function applyDeathPenalty() {
-        player.hp = player.maxHp;
-        player.deaths++;
-
-        let expLost = Math.floor(player.exp * 0.1);
-        let goldLost = Math.floor(player.gold * 0.1);
-
-        player.exp -= expLost;
-        player.gold = Math.max(0, Math.floor(player.gold - goldLost));
-
-        let deathLog = `<span class="death">⚠️ 战败倒下！惩罚：经验-${expLost}，金币-${goldLost}</span>`;
-
-        if (player.currentPet.type !== 'none') {
-            deathLog += `<br><span class="death">☠️ 契约魔宠【${player.currentPet.name}】不幸阵亡了！</span>`;
-            player.currentPet = { name: "无", type: "none", val: 0 };
-        }
-
-        if (player.currentWeapon.stat > 1) {
-            player.currentWeapon.stat = Math.max(1, Math.floor(player.currentWeapon.stat * 0.85));
-            player.currentWeapon.name = "残破的 " + player.currentWeapon.name.replace("残破的 ", "");
-        }
-        if (player.currentArmor.stat > 1) {
-            player.currentArmor.stat = Math.max(1, Math.floor(player.currentArmor.stat * 0.85));
-            player.currentArmor.name = "残破的 " + player.currentArmor.name.replace("残破的 ", "");
-        }
-
-        addLog(deathLog);
-    }
-
-    function dropRandomEquipment(isBoss) {
-        let isWeapon = Math.random() > 0.5;
-        let baseStat = (player.currentRegion + 1) * 12;
-        let rand = Math.random();
-        let quality = "普通";
-        let multiplier = 1.0;
-
-        if (rand < 0.05 || (isBoss && rand < 0.3)) { quality = "🔥 传说"; multiplier = 2.2; }
-        else if (rand < 0.2) { quality = "💜 史诗"; multiplier = 1.6; }
-        else if (rand < 0.5) { quality = "💙 稀有"; multiplier = 1.2; }
-
-        let finalStat = Math.floor(baseStat * multiplier);
-        let equipName = `${quality} ${isWeapon ? '战刃' : '防铠'}`;
-        codexData.equips.add(equipName);
-
-        if (isWeapon) {
-            if (finalStat > player.currentWeapon.stat) {
-                player.currentWeapon = { name: equipName, stat: finalStat, level: 0, quality, affixes: [] };
-                addLog(`<span class="rare">🎁 自动更换更强武器【${equipName}】(攻击+${finalStat})！</span>`);
-            }
-        } else {
-            if (finalStat > player.currentArmor.stat) {
-                player.currentArmor = { name: equipName, stat: finalStat, level: 0, quality, affixes: [] };
-                addLog(`<span class="rare">🛡️ 自动更换更强防具【${equipName}】(防御+${finalStat})！</span>`);
-            }
-        }
-    }
-
-    function checkWeatherChange() {
-        weatherTurnCounter++;
-        if (weatherTurnCounter >= 12) {
-            weatherTurnCounter = 0;
-            if (Math.random() < 0.6) {
-                currentWeather = weatherList[Math.floor(Math.random() * weatherList.length)];
-                addLog(`<span class="weather">🌧️ 天气变幻为：【${currentWeather.name}】(${currentWeather.desc})</span>`);
-            }
-        }
-    }
-
-    function learnSkill(skillId) {
-        let def = skillDefs.find(s => s.id === skillId);
-        let currentLv = skills[skillId] || 0;
-        
-        if (currentLv >= def.maxLv) { alert("该技能已达到最高等级！"); return; }
-        let costSp = currentLv + 1;
-        if (player.sp < costSp) { alert(`技能点(SP)不足！升级需要 ${costSp} 点 SP。`); return; }
-
-        player.sp -= costSp;
-        skills[skillId] = currentLv + 1;
-        
-        recalculateStats();
-
-        addLog(`⚡ 【${def.name}】 成功升级至 Lv.${skills[skillId]}！(消耗 ${costSp} SP)`);
-        saveGame();
-        updateUI();
-    }
-
-    function manualCraft(recipeId) {
-        let recipe = craftRecipes.find(r => r.id === recipeId);
-        if (!recipe) return;
-
-        for (let mat in recipe.materials) {
-            if ((inventory[mat] || 0) < recipe.materials[mat]) {
-                alert(`材料不足！缺少 ${itemNames[mat]}`);
-                return;
-            }
-        }
-
-        for (let mat in recipe.materials) inventory[mat] -= recipe.materials[mat];
-
-        if (recipe.type === "item") {
-            player[recipe.target] += recipe.amount;
-            if (recipe.target === "potionsLarge") codexData.bagHistory.add("大特效药水");
-        }
-        if (recipe.type === "mat") {
-            inventory[recipe.target] += recipe.amount;
-            codexData.materials.add(itemNames[recipe.target]);
-        }
-        if (recipe.type === "weapon") {
-            player.currentWeapon = { name: recipe.name, stat: recipe.stat, level: 0, quality: "炼金打造", affixes: [] };
-            codexData.equips.add(recipe.name);
-        }
-        if (recipe.type === "armor") {
-            player.currentArmor = { name: recipe.name, stat: recipe.stat, level: 0, quality: "炼金打造", affixes: [] };
-            codexData.equips.add(recipe.name);
-        }
-
-        if (autoCraftSettings[recipeId] === undefined) {
-            autoCraftSettings[recipeId] = false;
-        }
-        codexData.crafts.add(recipe.name);
-
-        addLog(`🧪 炼金成功：【${recipe.name}】！`);
-        saveGame();
-        updateUI();
-    }
-
-    function toggleAutoCraftSetting(recipeId) {
-        autoCraftSettings[recipeId] = !autoCraftSettings[recipeId];
-        saveGame();
-        updateUI();
-    }
-
-    function processAutoCrafting() {
-        craftRecipes.forEach(recipe => {
-            if (autoCraftSettings[recipe.id] === true) {
-                let canCraft = true;
-                for (let mat in recipe.materials) {
-                    if ((inventory[mat] || 0) < recipe.materials[mat]) canCraft = false;
-                }
-
-                if (canCraft) {
-                    for (let mat in recipe.materials) inventory[mat] -= recipe.materials[mat];
-                    if (recipe.type === "item") player[recipe.target] += recipe.amount;
-                    if (recipe.type === "mat") inventory[recipe.target] += recipe.amount;
-                    addLog(`⚙️ [自动炼金] 自动合成了 <span class="gain">${recipe.name}</span>！`);
-                }
-            }
-        });
-    }
-
-    function buyPotion(type, count, price) {
-        if (player.gold < price) { alert("金币不足！"); return; }
-        if (getCurrentBagCount() >= player.maxBagCapacity && ((type === 'small' && player.potionsSmall === 0) || (type === 'large' && player.potionsLarge === 0))) {
-            alert("背包已满！");
-            return;
-        }
-        player.gold -= price;
-        if (type === 'small') player.potionsSmall += count;
-        if (type === 'large') {
-            player.potionsLarge += count;
-            codexData.bagHistory.add("大特效药水");
-        }
-        addLog(`🛒 购买道具成功！`);
-        saveGame();
-        updateUI();
-    }
-
-    function buyBagUpgrade(id, price, extraCap) {
-        if (player.gold < price) { alert("金币不足！"); return; }
-        if (player.bagUpgradesPurchased.includes(id)) { alert("已购买过此扩展包！"); return; }
-
-        player.gold -= price;
-        player.maxBagCapacity += extraCap;
-        player.bagUpgradesPurchased.push(id);
-        addLog(`🎒 背包空间扩展 +${extraCap}！`);
-        saveGame();
-        updateUI();
-    }
-
-    function buyElixir(type, price) {
-        if (player.gold < price) { alert("金币不足！"); return; }
-        player.gold -= price;
-        if (type === 'crit') {
-            player.critRate += 5;
-            addLog(`⚡ 使用狂暴药剂！暴击率永久 +5%！`);
-        }
-        saveGame();
-        updateUI();
-    }
-
-    function adoptPet(name, type, val, price) {
-        if (player.gold < price) { alert("金币不足！"); return; }
-        player.gold -= price;
-        player.currentPet = { name, type, val };
-        addLog(`🐾 签订契约：【${name}】！`);
-        saveGame();
-        updateUI();
-    }
-
-    function checkLevelUp() {
-        if (player.exp >= player.maxExp) {
-            player.level++;
-            player.sp++;
-            player.exp -= player.maxExp;
-            player.maxExp = Math.floor(player.maxExp * 1.5);
-            recalculateStats();
-            player.hp = player.maxHp;
-            player.atk += 4;
-            player.def += 2;
-            addLog(`🎉 <span class="gain">等级提升至 Lv.${player.level}！获得 1 点技能点(SP)！</span>`);
-        }
-    }
-
-    function getCurrentBagCount() {
-        let count = 0;
-        if (player.potionsSmall > 0) count++;
-        if (player.potionsLarge > 0) count++;
-        for (let key in inventory) {
-            if (inventory[key] > 0) count++;
-        }
-        return count;
-    }
-
-    function toggleAutoBattle() {
-        isAuto = !isAuto;
-        const btn = document.getElementById("toggle-btn");
-        if (isAuto) {
-            btn.innerText = "暂停自动挂机";
-            btn.classList.add("active");
-            gameLoop();
-        } else {
-            btn.innerText = "开始挂机探索";
-            btn.classList.remove("active");
-            clearTimeout(timer);
-        }
-    }
-
-    function switchTab(tabName, el) {
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-        
-        if (el) el.classList.add('active');
-        const targetTab = document.getElementById(`tab-${tabName}`);
-        if (targetTab) targetTab.classList.add('active');
-    }
-
-    function changeRegion() {
-        let select = document.getElementById("region-select");
-        player.currentRegion = parseInt(select.value);
-        currentMonster = null;
-        addLog(`🗺️ 转移探索地区至：<span class="highlight">${regions[player.currentRegion].name}</span>`);
-        saveGame();
-    }
-
-    function updateUI() {
-        recalculateStats();
-
-        document.getElementById("player-level").innerText = `Lv.${player.level}`;
-        let extraAtk = getEquipAffixBonus('atk');
-        let extraDef = getEquipAffixBonus('def');
-        let skillAtk = (skills.berserk || 0) * 8;
-        let skillDef = (skills.iron_shield || 0) * 5;
-
-        document.getElementById("player-atk").innerText = player.atk + player.currentWeapon.stat + extraAtk + (player.currentPet.type === 'atk' ? player.currentPet.val : 0) + skillAtk;
-        document.getElementById("player-def").innerText = player.def + player.currentArmor.stat + extraDef + skillDef;
-        document.getElementById("player-deaths").innerText = player.deaths;
-        document.getElementById("player-gold").innerText = Math.floor(player.gold);
-        document.getElementById("player-sp").innerText = player.sp;
-        document.getElementById("bag-capacity").innerText = `${getCurrentBagCount()}/${player.maxBagCapacity}`;
-
-        let totalCrit = player.critRate + getEquipAffixBonus('crit') + (player.currentPet.type === 'crit' ? player.currentPet.val : 0) + ((skills.lucky_star || 0) * 5);
-        document.getElementById("crit-chance").innerText = `(暴击${totalCrit}%)`;
-
-        document.getElementById("hp-text").innerText = `${Math.max(0, player.hp)}/${player.maxHp}`;
-        document.getElementById("hp-bar").style.width = `${(Math.max(0, player.hp) / player.maxHp) * 100}%`;
-        document.getElementById("exp-text").innerText = `${Math.max(0, player.exp)}/${player.maxExp}`;
-        document.getElementById("exp-bar").style.width = `${(player.exp / player.maxExp) * 100}%`;
-
-        // 渲染装备与锻造界面属性
-        ['weapon', 'armor'].forEach(type => {
-            let equip = type === 'weapon' ? player.currentWeapon : player.currentArmor;
-            let nameElem = document.getElementById(type === 'weapon' ? "equip-weapon-name" : "equip-armor-name");
-            let statElem = document.getElementById(type === 'weapon' ? "equip-weapon-stat" : "equip-armor-stat");
-
-            let lvlTag = equip.level ? ` <span style="color:var(--accent);">+${equip.level}</span>` : "";
-            if (nameElem) nameElem.innerHTML = equip.name + lvlTag;
-
-            let affText = (equip.affixes || []).map(a => `${a.name}+${a.val}${a.unit}`).join(" ");
-            let baseStatText = `${type === 'weapon' ? '攻击' : '防御'} +${equip.stat}`;
-            if (statElem) statElem.innerText = affText ? `${baseStatText} | ${affText}` : baseStatText;
-
-            let forgeName = document.getElementById(`forge-${type}-name`);
-            let forgeDesc = document.getElementById(`forge-${type}-desc`);
-            if (forgeName) forgeName.innerHTML = equip.name + lvlTag;
-            if (forgeDesc) forgeDesc.innerText = `${baseStatText} ${affText ? '| ' + affText : ''}`;
-        });
-
-        document.getElementById("equip-pet-name").innerText = player.currentPet.name;
-        let petStatText = "无加成";
-        if (player.currentPet.type === 'heal') petStatText = `每轮恢复 ${player.currentPet.val} HP`;
-        else if (player.currentPet.type === 'crit') petStatText = `暴击率 +${player.currentPet.val}%`;
-        else if (player.currentPet.type === 'atk') petStatText = `攻击力 +${player.currentPet.val}`;
-        document.getElementById("equip-pet-stat").innerText = petStatText;
-
-        document.getElementById("weather-tag").innerText = `${currentWeather.name}`;
-
-        if (player.bagUpgradesPurchased.includes(1)) {
-            document.getElementById("btn-bag-1").disabled = true;
-            document.getElementById("btn-bag-1").innerText = "已持有";
-        }
-        if (player.bagUpgradesPurchased.includes(2)) {
-            document.getElementById("btn-bag-2").disabled = true;
-            document.getElementById("btn-bag-2").innerText = "已持有";
-        }
-
-        let regionSelect = document.getElementById("region-select");
-        regionSelect.innerHTML = regions.map((r, i) => 
-            `<option value="${i}" ${i === player.currentRegion ? 'selected' : ''}>${r.name}</option>`
-        ).join('');
-
-        if (currentMonster) {
-            document.getElementById("monster-name").innerText = currentMonster.name;
-            document.getElementById("monster-hp-text").innerText = `HP: ${Math.max(0, currentMonster.hp)}/${currentMonster.maxHp}`;
-            document.getElementById("monster-hp-bar").style.width = `${(Math.max(0, currentMonster.hp) / currentMonster.maxHp) * 100}%`;
-        }
-
-        let bagBox = document.getElementById("bag-list");
-        let html = "";
-        if (player.potionsSmall > 0) html += `<div class="item-row"><div>🧪 小型生命药水</div><div>拥有: ${player.potionsSmall}</div></div>`;
-        if (player.potionsLarge > 0) html += `<div class="item-row"><div>🧪 大特效药水</div><div>拥有: ${player.potionsLarge}</div></div>`;
-        
-        for (let key in inventory) {
-            if (inventory[key] > 0) {
-                let price = itemPrices[key] || 1;
-                html += `
-                    <div class="item-row">
-                        <div>${itemNames[key]} <span class="item-desc">(单价: ${price}💰)</span></div>
-                        <div class="btn-group" style="align-items:center;">
-                            <span style="margin-right:8px;">x${inventory[key]}</span>
-                            <button type="button" class="btn-sm" onclick="sellItem('${key}')">出售 1 个</button>
-                        </div>
-                    </div>`;
-            }
-        }
-        if (html === "") html = `<div style="text-align:center; color:var(--subtext); padding:10px;">背包空空如也...</div>`;
-        bagBox.innerHTML = html;
-
-        renderSkillList();
-        renderCraftList();
-        renderCodex();
-    }
-    
-    function renderSkillList() {
-        let skillBox = document.getElementById("skill-list");
-        let spText = document.getElementById("skill-tab-sp");
-        if (spText) spText.innerText = player.sp;
-        if (!skillBox) return;
-        
-        let html = "";
-        skillDefs.forEach(s => {
-            let lv = skills[s.id] || 0;
-            let isMax = lv >= s.maxLv;
-            let costSp = lv + 1;
-            let desc = s.getDesc(lv > 0 ? lv : 1);
-        
-            html += `
-                <div class="item-row">
-                    <div>
-                        <div>
-                            ${s.name} 
-                            <span style="color:var(--accent); font-weight:bold; font-size:0.75rem;">
-                                [Lv.${lv}/${s.maxLv}]
-                            </span>
-                        </div>
-                        <div class="item-desc">${desc}</div>
-                    </div>
-                    <div style="min-width: 90px; text-align: right;">
-                        <button type="button" class="btn-sm ${isMax ? 'btn-off' : ''}" onclick="learnSkill('${s.id}')" ${isMax ? 'disabled' : ''}>
-                            ${isMax ? '已满级' : `升级 (${costSp} SP)`}
-                        </button>
-                    </div>
-                </div>
-            `;
-        });
-        skillBox.innerHTML = html;
-    }
-
-    function renderCraftList() {
-        let craftBox = document.getElementById("craft-list");
-        if (!craftBox) return;
-        let html = "";
-        craftRecipes.forEach(r => {
-            let isAutoOn = autoCraftSettings[r.id] === true;
-            let reqText = Object.keys(r.materials).map(m => `${itemNames[m]} x${r.materials[m]}`).join(", ");
-            
-            html += `
-                <div class="item-row">
-                    <div>
-                        <div>${r.name}</div>
-                        <div class="item-desc">需要：${reqText}</div>
-                    </div>
-                    <div class="btn-group">
-                        <button type="button" class="btn-sm" onclick="manualCraft('${r.id}')">手动合成</button>
-                        <button type="button" class="btn-sm ${isAutoOn ? '' : 'btn-off'}" onclick="toggleAutoCraftSetting('${r.id}')">
-                            ${isAutoOn ? '自动中' : '已停用'}
-                        </button>
-                    </div>
-                </div>
-            `;
-        });
-        craftBox.innerHTML = html;
-    }
-
-    function renderCodex() {
-        let mHtml = "";
-        regions.forEach(r => {
-            r.monsters.forEach(m => {
-                let unlocked = codexData.monsters.has(m.name);
-                mHtml += `<div class="codex-card ${unlocked ? '' : 'locked'}">
-                    <div class="name">${unlocked ? m.name : '???'}</div>
-                    <div>${unlocked ? '基础HP:' + m.hp : '未遭遇'}</div>
-                </div>`;
-            });
-        });
-        document.getElementById("codex-monsters").innerHTML = mHtml;
-
-        let eHtml = "";
-        codexData.equips.forEach(e => {
-            eHtml += `<div class="codex-card"><div class="name">${e}</div><div>已解锁获得</div></div>`;
-        });
-        document.getElementById("codex-equips").innerHTML = eHtml;
-
-        let matHtml = "";
-        for (let key in itemNames) {
-            let name = itemNames[key];
-            let unlocked = codexData.materials.has(name);
-            matHtml += `<div class="codex-card ${unlocked ? '' : 'locked'}">
-                <div class="name">${unlocked ? name : '???'}</div>
-                <div>${unlocked ? '已获得过' : '未解锁'}</div>
-            </div>`;
-        }
-        document.getElementById("codex-materials").innerHTML = matHtml;
-
-        let cHtml = "";
-        craftRecipes.forEach(r => {
-            let unlocked = codexData.crafts.has(r.name);
-            cHtml += `<div class="codex-card ${unlocked ? '' : 'locked'}">
-                <div class="name">${unlocked ? r.name : '???'}</div>
-                <div>${unlocked ? '已成功打造' : '未解锁配方'}</div>
-            </div>`;
-        });
-        document.getElementById("codex-crafts").innerHTML = cHtml;
-
-        let bHtml = "";
-        codexData.bagHistory.forEach(b => {
-            bHtml += `<div class="codex-card"><div class="name">${b}</div><div>已收录背包</div></div>`;
-        });
-        document.getElementById("codex-bag-history").innerHTML = bHtml;
-    }
-
-    function addLog(text) {
-        const logBox = document.getElementById("log-box");
-        const logItem = document.createElement("div");
-        logItem.className = "log-item";
-        logItem.innerHTML = `> ${text}`;
-        logBox.insertBefore(logItem, logBox.firstChild);
-    }
-
-    // 初始化入口
-    loadGame();
+    gameState.stamina -= 5;
+    gameState.wood += 1;
+    gameState.grass += 1;
+    addLog("四岁的小精灵抱回了一小把树枝和干草。");
     updateUI();
+    saveGame();
+  }
+
+  // 制作防身木棍
+  function craftWeapon() {
+    if (gameState.wood >= 5) {
+      gameState.wood -= 5;
+      gameState.weapon += 1;
+      addLog("小精灵用小刀认真削好了一把防身的小木棍！");
+      updateUI();
+      saveGame();
+    } else {
+      addLog("没有足够的树枝（需要 5 个）。");
+    }
+  }
+
+  // 远足探险
+  function goExplore() {
+    if (gameState.fruit < 2) {
+      addLog("去远足需要准备足够的食物！(需要 2 个野果)");
+      return;
+    }
+    if (gameState.weapon < 1) {
+      addLog("森林深处有点危险，小精灵不敢赤手空拳过去。(需要 1 把小木棍防身)");
+      return;
+    }
+
+    gameState.fruit -= 2;
+    addLog("小精灵背起小背囊，握紧木棍出发去远处探险了...");
+
+    // 随机远足收获
+    setTimeout(() => {
+      const foundStone = Math.floor(Math.random() * 4) + 1;
+      const foundFruit = Math.floor(Math.random() * 3) + 1;
+      gameState.stone += foundStone;
+      gameState.fruit += foundFruit;
+      addLog(`远足归来！小精灵虽然有些疲惫，但找到了 ${foundStone} 块坚硬的石头和 ${foundFruit} 颗野果！`);
+      updateUI();
+      saveGame();
+    }, 2000);
+  }
+
+  // 扩建房屋
+  function upgradeHouse() {
+    if (gameState.houseLevel >= houseCosts.length) return;
+    const cost = houseCosts[gameState.houseLevel];
+    if (gameState.wood >= cost.wood && gameState.grass >= cost.grass && gameState.stone >= cost.stone) {
+      gameState.wood -= cost.wood;
+      gameState.grass -= cost.grass;
+      gameState.stone -= cost.stone;
+      gameState.houseLevel += 1;
+      addLog(`【好消息】小精灵依靠自己的双手，把家改造成了“${houseNames[gameState.houseLevel]}”！真棒！`);
+      updateUI();
+      saveGame();
+    }
+  }
+
+  // 自动挂机循环（每 5 秒自动搜集微量资源 & 恢复体力）
+  function gameLoop() {
+    // 体力恢复
+    if (gameState.stamina < 100) gameState.stamina = Math.min(100, gameState.stamina + 2);
+
+    // 根据房屋等级自动获得资源（挂机体验）
+    const rate = gameState.houseLevel + 1;
+    gameState.wood += rate;
+    gameState.grass += rate;
+
+    // 随机事件：小动物拜访
+    if (Math.random() < 0.15) {
+      triggerAnimalEvent();
+    }
+
+    updateUI();
+    saveGame();
+  }
+
+  // 随机小动物拜访事件
+  function triggerAnimalEvent() {
+    const events = [
+      "一只小松鼠跳到了窗台上，好奇地看了看小精灵，留下了一颗坚果。",
+      "一只避雨的小麻雀飞到了屋檐下，留下了一根五彩斑斓的羽毛作为礼物。",
+      "路过的小白兔在门口蹭了蹭，留下了几颗甜甜的野果。",
+      "夜空下的萤火虫飞过，为小精灵的小屋带来了微弱又温暖的光芒。"
+    ];
+    const randomIndex = Math.floor(Math.random() * events.length);
+    gameState.gift += 1;
+    gameState.fruit += 1;
+    addLog(`【温情时刻】${events[randomIndex]}`);
+  }
+
+  // 数据保存与读取（LocalStorage）
+  function saveGame() {
+    gameState.lastTime = Date.now();
+    localStorage.setItem('elf_game_save', JSON.stringify(gameState));
+  }
+
+  function loadGame() {
+    const saved = localStorage.getItem('elf_game_save');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      gameState = { ...gameState, ...parsed };
+
+      // 计算离线挂机收益
+      const now = Date.now();
+      const offlineSeconds = Math.floor((now - gameState.lastTime) / 1000);
+      if (offlineSeconds > 10) {
+        const offlineGain = Math.min(Math.floor(offlineSeconds / 10), 100); // 离线上限100次
+        gameState.wood += offlineGain;
+        gameState.grass += offlineGain;
+        addLog(`在你离开的这段时间里，小精灵一直在默默忙碌，收集到了 ${offlineGain} 份树枝和干草。`);
+      }
+    } else {
+      addLog("四岁的小精灵在森林深处醒来，四周一片安静。你需要帮他准备食物和住房。");
+    }
+    updateUI();
+  }
+
+  function resetData() {
+    if (confirm("确定要重置所有游戏进度吗？")) {
+      localStorage.removeItem('elf_game_save');
+      location.reload();
+    }
+  }
+
+  // 初始化游戏
+  window.onload = () => {
+    loadGame();
+    // 每 5 秒进行一次自动挂机结算
+    setInterval(gameLoop, 5000);
+  };
 </script>
+
 </body>
 </html>
