@@ -163,19 +163,38 @@
         <div id="bag-list"></div>
     </div>
 
-    <!-- TAB 2: 炼金 -->
-    <div id="tab-craft" class="tab-content card">
-        <div id="craft-list"></div>
+    <!-- TAB 2: 炼金与锻造 -->
+<div id="tab-craft" class="tab-content card">
+    <div class="title" style="font-size:0.85rem;">🔨 装备强化与洗炼</div>
+    <div style="background:#222; padding:8px; border-radius:4px; margin-bottom:10px;">
+        <div style="font-weight:bold; color:var(--accent); margin-bottom:4px;">🗡️ 当前武器</div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <span id="forge-weapon-name" style="font-weight:bold;">新手木剑</span>
+                <div id="forge-weapon-desc" class="item-desc">攻击 +2</div>
+            </div>
+            <div class="btn-group">
+                <button type="button" class="btn-sm" onclick="enhanceEquipment('weapon')">强化 (100💰 + 1铁块)</button>
+                <button type="button" class="btn-sm" onclick="reforgeEquipment('weapon')">洗炼 (200💰 + 1火山赤石)</button>
+            </div>
+        </div>
+        <hr style="border:0; border-top:1px dashed #333; margin:8px 0;">
+        <div style="font-weight:bold; color:var(--accent); margin-bottom:4px;">🛡️ 当前防具</div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <span id="forge-armor-name" style="font-weight:bold;">破旧布衣</span>
+                <div id="forge-armor-desc" class="item-desc">防御 +1</div>
+            </div>
+            <div class="btn-group">
+                <button type="button" class="btn-sm" onclick="enhanceEquipment('armor')">强化 (100💰 + 1铁块)</button>
+                <button type="button" class="btn-sm" onclick="reforgeEquipment('armor')">洗炼 (200💰 + 1火山赤石)</button>
+            </div>
+        </div>
     </div>
 
-    <!-- TAB 3: 技能 -->
-    <div id="tab-skills" class="tab-content card">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <span class="title" style="margin-bottom:0; border-bottom:none;">⚡ 技能修炼</span>
-                <span style="font-size:0.8rem;">可用 SP: <span id="skill-tab-sp" style="color:var(--accent); font-weight:bold;">0</span></span>
-            </div>
-        <div id="skill-list"></div>
-    </div>
+    <div class="title" style="font-size:0.85rem;">🧪 配方炼金</div>
+    <div id="craft-list"></div>
+</div>
 
     <!-- TAB 4: 商店 -->
     <div id="tab-shop" class="tab-content card">
@@ -274,11 +293,20 @@
         potionsSmall: 2, potionsLarge: 0, critRate: 10, currentRegion: 0, maxBagCapacity: 15,
         sp: 0,
         bagUpgradesPurchased: [],
-        currentWeapon: { name: "新手木剑", stat: 2, quality: "普通" },
-        currentArmor: { name: "破旧布衣", stat: 1, quality: "普通" },
+        currentWeapon: { name: "新手木剑", stat: 2, level: 0, quality: "普通", affixes: [] },
+        currentArmor: { name: "破旧布衣", stat: 1, level: 0, quality: "普通", affixes: [] }
         currentPet: { name: "无", type: "none", val: 0 }
     };
     let player = JSON.parse(JSON.stringify(defaultPlayer));
+
+    //随机词条
+    const possibleAffixes = [
+    { name: "生命上限", type: "hp", valMin: 30, valMax: 100, unit: "" },
+    { name: "额外攻击", type: "atk", valMin: 3, valMax: 15, unit: "" },
+    { name: "额外防御", type: "def", valMin: 2, valMax: 10, unit: "" },
+    { name: "暴击加成", type: "crit", valMin: 3, valMax: 8, unit: "%" },
+    { name: "吸血效果", type: "vamp", valMin: 2, valMax: 5, unit: "%" }
+];
 
     // 默认技能等级（0级表示未学习）
     const defaultSkills = { heavy_strike: 0, toughness: 0, vampire: 0, lucky_star: 0, berserk: 0, iron_shield: 0 };
@@ -427,7 +455,90 @@
              addLog(`💰 出售了 1 个 <span class="highlight">${itemNames[itemKey]}</span>，获得 ${price} 金币！`);
              saveGame();
              updateUI();
-         }
+         } 
+    };
+
+    // 1. 装备强化 (+1 ~ +10)
+    function enhanceEquipment(type) {
+        let equip = type === 'weapon' ? player.currentWeapon : player.currentArmor;
+        equip.level = equip.level || 0;
+
+        if (equip.level >= 10) { alert("该装备已达到最大强化等级 (+10)！"); return; }
+        
+        let goldCost = (equip.level + 1) * 150;
+        let ironCost = Math.max(1, Math.floor((equip.level + 1) / 2));
+
+        if (player.gold < goldCost) { alert(`金币不足！强化需要 ${goldCost} 金币。`); return; }
+        if ((inventory.refined_iron || 0) < ironCost) { alert(`材料不足！强化需要精炼铁块 x${ironCost}。`); return; }
+        
+        // 强化成功率计算（随着等级递减）
+        let successRate = Math.max(20, 100 - equip.level * 8); 
+        let roll = getRandomInt(1, 100);
+        
+        player.gold -= goldCost;
+        inventory.refined_iron -= ironCost;
+
+        if (roll <= successRate) {
+            equip.level++;
+            equip.stat += type === 'weapon' ? 3 : 2; // 强化提升基础面板
+            addLog(`🔨 <span class="gain">强化成功！</span> 【${equip.name}】提升至 +${equip.level}！`);
+        } else {
+            addLog(`💥 <span class="death">强化失败！</span> 浪费了材料，强化等级未变。`);
+        }
+
+        saveGame();
+        updateUI();
+    }
+    
+    // 2. 随机词条洗炼
+    function reforgeEquipment(type) {
+        let equip = type === 'weapon' ? player.currentWeapon : player.currentArmor;
+        let goldCost = 200;
+
+        if (player.gold < goldCost) { alert(`金币不足！洗炼需要 ${goldCost} 金币。`); return; }
+        if ((inventory.volcano_stone || 0) < 1) { alert("材料不足！洗炼需要 火山赤石 x1。"); return; }
+
+        player.gold -= goldCost;
+        inventory.volcano_stone--;
+
+        // 随机生成 1~2 条新词条
+        let affixCount = Math.random() < 0.4 ? 2 : 1;
+        let newAffixes = [];
+
+        for (let i = 0; i < affixCount; i++) {
+            let template = possibleAffixes[getRandomInt(0, possibleAffixes.length - 1)];
+            let val = getRandomInt(template.valMin, template.valMax);
+            newAffixes.push({ name: template.name, type: template.type, val: val, unit: template.unit });
+        }
+
+        equip.affixes = newAffixes;
+
+        addLog(`✨ <span class="rare">洗炼成功！</span> 【${equip.name}】获得了全新的附加属性！`);
+    
+        // 重算装备加成后的生命上限等属性
+        recalculateStats();
+        saveGame();
+        updateUI();
+    }
+    // 3. 计算所有装备词条的属性加成
+    function getEquipAffixBonus(attrType) {
+        let total = 0;
+        [player.currentWeapon, player.currentArmor].forEach(equip => {
+            if (equip && equip.affixes) {
+                equip.affixes.forEach(aff => {
+                    if (aff.type === attrType) total += aff.val;
+                });
+            }
+        });
+        return total;
+    }
+
+    // 刷新计算生命上限
+    function recalculateStats() {
+        let hpBonus = getEquipAffixBonus('hp');
+        let skillToughBonus = 1 + ((skills.toughness || 0) * 0.15);
+        player.maxHp = Math.floor(((100 + (player.level - 1) * 30) + hpBonus) * skillToughBonus);
+        player.hp = Math.min(player.hp, player.maxHp);
     }
 
     // -------------------------------------------------------------
@@ -553,14 +664,18 @@
 
         if (player.currentPet.type === 'heal') player.hp = Math.min(player.maxHp, player.hp + player.currentPet.val);
 
-
+        //词条加成（计算用）
+        let extraAtk = getEquipAffixBonus('atk');
+        let extraDef = getEquipAffixBonus('def');
+        let extraCrit = getEquipAffixBonus('crit');
+        let extraVamp = getEquipAffixBonus('vamp');
+        
         // 1. 狂暴战意 & 铁壁守御 属性加成（在攻击/防御计算时）
         let skillAtkBonus = (skills.berserk || 0) * 8;
         let skillDefBonus = (skills.iron_shield || 0) * 5;
         
-        let totalAtk = player.atk + player.currentWeapon.stat + (player.currentPet.type === 'atk' ? player.currentPet.val : 0) + skillAtkBonus;
-        let totalCrit = player.critRate + (player.currentPet.type === 'crit' ? player.currentPet.val : 0) + ((skills.lucky_star || 0) * 5);
-        
+        let totalAtk = player.atk + player.currentWeapon.stat + extraAtk + (player.currentPet.type === 'atk' ? player.currentPet.val : 0) + skillAtkBonus;
+        let totalCrit = player.critRate + extraCrit + (player.currentPet.type === 'crit' ? player.currentPet.val : 0) + ((skills.lucky_star || 0) * 5);
         // 2. 强力重击伤害倍率计算
         let isCrit = Math.random() * 100 < totalCrit;
         
@@ -577,8 +692,8 @@
         currentMonster.hp -= damageToMonster;
 
         // 3. 吸血比例计算
-        if (skills.vampire > 0) {
-            let vampireRate = skills.vampire * 0.05; // 每级 5% 吸血
+        let vampireRate = ((skills.vampire || 0) * 0.05) + (extraVamp / 100);
+        if (vampireRate > 0) {
             let healAmt = Math.floor(damageToMonster * vampireRate);
             player.hp = Math.min(player.maxHp, player.hp + healAmt);
         }
@@ -1049,6 +1164,26 @@
         });
         craftBox.innerHTML = html;
     }
+
+    // 渲染面板上的装备信息
+    ['weapon', 'armor'].forEach(type => {
+        let equip = type === 'weapon' ? player.currentWeapon : player.currentArmor;
+        let nameElem = document.getElementById(type === 'weapon' ? "equip-weapon-name" : "equip-armor-name");
+        let statElem = document.getElementById(type === 'weapon' ? "equip-weapon-stat" : "equip-armor-stat");
+
+        let lvlTag = equip.level ? ` <span style="color:var(--accent);">+${equip.level}</span>` : "";
+        if (nameElem) nameElem.innerHTML = equip.name + lvlTag;
+
+        let affText = (equip.affixes || []).map(a => `${a.name}+${a.val}${a.unit}`).join(" ");
+        let baseStatText = `${type === 'weapon' ? '攻击' : '防御'} +${equip.stat}`;
+        if (statElem) statElem.innerText = affText ? `${baseStatText} | ${affText}` : baseStatText;
+
+        // 同步更新锻造台界面的属性预览
+        let forgeName = document.getElementById(`forge-${type}-name`);
+        let forgeDesc = document.getElementById(`forge-${type}-desc`);
+        if (forgeName) forgeName.innerHTML = equip.name + lvlTag;
+        if (forgeDesc) forgeDesc.innerText = `${baseStatText} ${affText ? '| ' + affText : ''}`;
+    });
 
     function renderCodex() {
         let mHtml = "";
