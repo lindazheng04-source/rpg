@@ -22,33 +22,33 @@
       background-color: var(--bg-color);
       color: var(--text-color);
       font-family: system-ui, -apple-system, sans-serif;
-      line-height: 1.6;
+      line-height: 1.5;
     }
 
     .container {
-      max-width: 900px;
+      max-width: 1000px;
       margin: 0 auto;
       display: grid;
-      grid-template-columns: 280px 1fr;
+      grid-template-columns: 300px 1fr;
       gap: 20px;
     }
 
-    @media (max-width: 650px) {
+    @media (max-width: 768px) {
       .container { grid-template-columns: 1fr; }
     }
 
-    h2, h3 { margin-top: 0; color: var(--accent-color); }
+    h2, h3 { margin-top: 0; color: var(--accent-color); font-size: 1.1em; }
 
     .card {
       background-color: var(--panel-bg);
       border: 1px solid var(--border-color);
       border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 20px;
+      padding: 14px;
+      margin-bottom: 16px;
     }
 
     .log-container {
-      height: 380px;
+      height: 320px;
       overflow-y: auto;
       border: 1px solid var(--border-color);
       background-color: #fcfaf2;
@@ -59,33 +59,29 @@
     }
 
     .log-entry {
-      margin-bottom: 8px;
-      font-size: 0.9em;
+      margin-bottom: 6px;
+      font-size: 0.88em;
       border-bottom: 1px dashed #e2dac2;
       padding-bottom: 4px;
     }
 
-    .time-stamp {
-      color: #887d65;
-      font-size: 0.85em;
-      margin-right: 6px;
-    }
+    .time-stamp { color: #887d65; font-size: 0.85em; margin-right: 6px; }
 
     .action-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-      gap: 10px;
-      margin-top: 10px;
+      gap: 8px;
+      margin-top: 8px;
     }
 
     button {
       background-color: var(--accent-color);
       color: white;
       border: none;
-      padding: 8px 12px;
+      padding: 8px 10px;
       border-radius: 4px;
       cursor: pointer;
-      font-size: 0.9em;
+      font-size: 0.85em;
       transition: background-color 0.2s;
     }
 
@@ -93,20 +89,45 @@
     button:disabled { background-color: #999; cursor: not-allowed; opacity: 0.6; }
 
     .stat-label { font-weight: bold; }
-    .resource-list { list-style: none; padding: 0; margin: 0; }
+    .resource-list { list-style: none; padding: 0; margin: 0; font-size: 0.9em; }
     .resource-list li { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    
+    .room-tag {
+      display: inline-block;
+      background: #d0c4a5;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.8em;
+      margin-right: 4px;
+      margin-bottom: 4px;
+    }
+
+    .animal-card {
+      border-top: 1px solid var(--border-color);
+      padding-top: 6px;
+      margin-top: 6px;
+      font-size: 0.85em;
+    }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <!-- 左侧：精灵状态与资源面板 -->
+  <!-- 左侧：状态与物资 -->
   <div>
     <div class="card">
       <h2>小精灵状态</h2>
       <p><span class="stat-label">名字：</span>四岁的小精灵</p>
-      <p><span class="stat-label">居所：</span><span id="house-name">树枝搭的小草棚</span></p>
       <p><span class="stat-label">体力：</span><span id="stamina">100</span> / 100</p>
+      <p><span class="stat-label">状态：</span><span id="elf-status">在家里歇息</span></p>
+      <p><span class="stat-label">烹饪熟练度：</span><span id="cook-exp">0</span>%</p>
+    </div>
+
+    <div class="card">
+      <h3>我的房子与设施</h3>
+      <div id="room-list">
+        <span class="room-tag">简陋草棚</span>
+      </div>
     </div>
 
     <div class="card">
@@ -115,14 +136,19 @@
         <li><span>树枝:</span> <span id="res-wood">0</span></li>
         <li><span>干草:</span> <span id="res-grass">0</span></li>
         <li><span>石头:</span> <span id="res-stone">0</span></li>
-        <li><span>野果:</span> <span id="res-fruit">0</span></li>
+        <li><span>野果(生食):</span> <span id="res-fruit">5</span></li>
+        <li><span>热熟食:</span> <span id="res-cooked">0</span></li>
         <li><span>小木棍(武器):</span> <span id="res-weapon">0</span></li>
-        <li><span>奇特小礼物:</span> <span id="res-gift">0</span></li>
       </ul>
+    </div>
+
+    <div class="card">
+      <h3>森林邻居（好感度）</h3>
+      <div id="animal-list"></div>
     </div>
   </div>
 
-  <!-- 右侧：日志与动作操作 -->
+  <!-- 右侧：日志与控制 -->
   <div>
     <div class="card">
       <h2>森林日记</h2>
@@ -130,15 +156,25 @@
     </div>
 
     <div class="card">
-      <h3>小精灵的行动</h3>
+      <h3>生活与建造</h3>
       <div class="action-grid">
-        <button id="btn-gather" onclick="manualGather()">亲自收集物资</button>
-        <button id="btn-craft-weapon" onclick="craftWeapon()">削一把木棍</button>
-        <button id="btn-explore" onclick="goExplore()">前往森林深处远足</button>
-        <button id="btn-upgrade" onclick="upgradeHouse()">扩建房子</button>
+        <button onclick="eatFruit()">吃野果 (+15体力)</button>
+        <button id="btn-eat-cooked" onclick="eatCooked()">吃熟食 (+50体力)</button>
+        <button id="btn-cook" onclick="cookFood()">在厨房烹饪</button>
+        <button onclick="manualGather()">手动采收集物资</button>
+        <button onclick="craftWeapon()">削防身木棍</button>
       </div>
+
+      <h3 style="margin-top: 15px;">扩建房屋与设施</h3>
+      <div class="action-grid">
+        <button id="btn-build-kitchen" onclick="buildRoom('kitchen')">建造厨房 (20木10石)</button>
+        <button id="btn-build-bedroom" onclick="buildRoom('bedroom')">建造睡房 (30木20草)</button>
+        <button id="btn-build-classroom" onclick="buildRoom('classroom')">建造课堂 (40木30石)</button>
+        <button id="btn-build-petcorner" onclick="buildRoom('petcorner')">建造动物游乐角 (50草30石)</button>
+      </div>
+
       <div style="margin-top: 15px; font-size: 0.85em; color: #666; text-align: right;">
-        * 游戏自动进行背景挂机与自动保存
+        * 小精灵每隔一段时间会自动带着武器和食物出门远足
         <button onclick="resetData()" style="background:#b33939; margin-left:10px; padding: 2px 6px;">重置存档</button>
       </div>
     </div>
@@ -146,33 +182,39 @@
 </div>
 
 <script>
-  // 游戏核心状态
   let gameState = {
     wood: 0,
     grass: 0,
     stone: 0,
     fruit: 5,
+    cooked: 0,
     weapon: 0,
-    gift: 0,
     stamina: 100,
-    houseLevel: 0,
+    cookExp: 0,
+    isExploring: false,
+    rooms: ['草棚'],
+    animals: {
+      squirrel: { name: "小松鼠", favor: 0, isResident: false },
+      bird: { name: "小麻雀", favor: 0, isResident: false },
+      rabbit: { name: "小白兔", favor: 0, isResident: false }
+    },
     lastTime: Date.now()
   };
 
-  const houseNames = [
-    "树枝搭的小草棚",
-    "遮风避雨的树洞",
-    "温馨的木板小屋",
-    "带有小花园的森林大大城堡"
-  ];
+  const roomNames = {
+    kitchen: "厨房",
+    bedroom: "睡房",
+    classroom: "课堂",
+    petcorner: "动物游乐角"
+  };
 
-  const houseCosts = [
-    { wood: 15, grass: 15, stone: 0 },   // 升级到等级1 (树洞)
-    { wood: 40, grass: 20, stone: 20 },  // 升级到等级2 (木屋)
-    { wood: 100, grass: 50, stone: 80 }  // 升级到等级3 (城堡)
-  ];
+  const roomCosts = {
+    kitchen: { wood: 20, grass: 0, stone: 10 },
+    bedroom: { wood: 30, grass: 20, stone: 0 },
+    classroom: { wood: 40, grass: 0, stone: 30 },
+    petcorner: { wood: 0, grass: 50, stone: 30 }
+  };
 
-  // 日志打印功能
   function addLog(text) {
     const logBox = document.getElementById('log-box');
     const timeStr = new Date().toLocaleTimeString('zh-CN', { hour12: false });
@@ -182,169 +224,232 @@
     logBox.insertBefore(entry, logBox.firstChild);
   }
 
-  // 界面刷新
   function updateUI() {
     document.getElementById('res-wood').innerText = gameState.wood;
     document.getElementById('res-grass').innerText = gameState.grass;
     document.getElementById('res-stone').innerText = gameState.stone;
     document.getElementById('res-fruit').innerText = gameState.fruit;
+    document.getElementById('res-cooked').innerText = gameState.cooked;
     document.getElementById('res-weapon').innerText = gameState.weapon;
-    document.getElementById('res-gift').innerText = gameState.gift;
     document.getElementById('stamina').innerText = gameState.stamina;
-    document.getElementById('house-name').innerText = houseNames[gameState.houseLevel];
+    document.getElementById('cook-exp').innerText = gameState.cookExp;
+    document.getElementById('elf-status').innerText = gameState.isExploring ? "外出去远足了..." : "在家里歇息";
 
-    // 更新按钮状态
-    const btnUpgrade = document.getElementById('btn-upgrade');
-    if (gameState.houseLevel >= houseCosts.length) {
-      btnUpgrade.innerText = "房屋已达顶级";
-      btnUpgrade.disabled = true;
-    } else {
-      const cost = houseCosts[gameState.houseLevel];
-      btnUpgrade.innerText = `扩建房子 (${cost.wood}木 ${cost.grass}草 ${cost.stone}石)`;
-      btnUpgrade.disabled = !(gameState.wood >= cost.wood && gameState.grass >= cost.grass && gameState.stone >= cost.stone);
+    // 房间渲染
+    const roomContainer = document.getElementById('room-list');
+    roomContainer.innerHTML = gameState.rooms.map(r => `<span class="room-tag">${r}</span>`).join('');
+
+    // 动物渲染
+    const animalContainer = document.getElementById('animal-list');
+    animalContainer.innerHTML = Object.keys(gameState.animals).map(k => {
+      const a = gameState.animals[k];
+      return `<div class="animal-card">
+        <b>${a.name}</b> - 好感度: ${a.favor}% ${a.isResident ? '<span style="color:green;">(已常驻入住)</span>' : ''}
+      </div>`;
+    }).join('');
+
+    // 按钮禁用状态控制
+    document.getElementById('btn-cook').disabled = !gameState.rooms.includes("厨房") || gameState.fruit < 2;
+    document.getElementById('btn-eat-cooked').disabled = gameState.cooked < 1;
+
+    for (let key in roomCosts) {
+      const btn = document.getElementById(`btn-build-${key}`);
+      if (btn) {
+        const cost = roomCosts[key];
+        const owned = gameState.rooms.includes(roomNames[key]);
+        btn.disabled = owned || !(gameState.wood >= cost.wood && gameState.grass >= cost.grass && gameState.stone >= cost.stone);
+        if (owned) btn.innerText = `${roomNames[key]} (已建造)`;
+      }
     }
   }
 
-  // 手动收集
-  function manualGather() {
-    if (gameState.stamina < 5) {
-      addLog("小精灵太累了，先休息一下吧...");
-      return;
-    }
-    gameState.stamina -= 5;
-    gameState.wood += 1;
-    gameState.grass += 1;
-    addLog("四岁的小精灵抱回了一小把树枝和干草。");
-    updateUI();
-    saveGame();
+  // 1. 体力与吃东西
+  function eatFruit() {
+    if (gameState.fruit < 1) { addLog("没有野果了。"); return; }
+    if (gameState.stamina >= 100) { addLog("小精灵肚子饱饱的，吃不下了。"); return; }
+    gameState.fruit -= 1;
+    gameState.stamina = Math.min(100, gameState.stamina + 15);
+    addLog("小精灵啃了一颗酸甜的野果，恢复了 15 点体力。");
+    updateUI(); saveGame();
   }
 
-  // 制作防身木棍
-  function craftWeapon() {
-    if (gameState.wood >= 5) {
-      gameState.wood -= 5;
-      gameState.weapon += 1;
-      addLog("小精灵用小刀认真削好了一把防身的小木棍！");
-      updateUI();
-      saveGame();
-    } else {
-      addLog("没有足够的树枝（需要 5 个）。");
-    }
+  function eatCooked() {
+    if (gameState.cooked < 1) return;
+    if (gameState.stamina >= 100) { addLog("小精灵肚子饱饱的，吃不下了。"); return; }
+    gameState.cooked -= 1;
+    gameState.stamina = Math.min(100, gameState.stamina + 50);
+    addLog("小精灵享用了一顿香喷喷的热熟食，恢复了 50 点体力！");
+    updateUI(); saveGame();
   }
 
-  // 远足探险
-  function goExplore() {
-    if (gameState.fruit < 2) {
-      addLog("去远足需要准备足够的食物！(需要 2 个野果)");
-      return;
-    }
-    if (gameState.weapon < 1) {
-      addLog("森林深处有点危险，小精灵不敢赤手空拳过去。(需要 1 把小木棍防身)");
-      return;
-    }
+  // 2. 扩建房间
+  function buildRoom(type) {
+    const name = roomNames[type];
+    const cost = roomCosts[type];
+    if (gameState.rooms.includes(name)) return;
 
-    gameState.fruit -= 2;
-    addLog("小精灵背起小背囊，握紧木棍出发去远处探险了...");
-
-    // 随机远足收获
-    setTimeout(() => {
-      const foundStone = Math.floor(Math.random() * 4) + 1;
-      const foundFruit = Math.floor(Math.random() * 3) + 1;
-      gameState.stone += foundStone;
-      gameState.fruit += foundFruit;
-      addLog(`远足归来！小精灵虽然有些疲惫，但找到了 ${foundStone} 块坚硬的石头和 ${foundFruit} 颗野果！`);
-      updateUI();
-      saveGame();
-    }, 2000);
-  }
-
-  // 扩建房屋
-  function upgradeHouse() {
-    if (gameState.houseLevel >= houseCosts.length) return;
-    const cost = houseCosts[gameState.houseLevel];
     if (gameState.wood >= cost.wood && gameState.grass >= cost.grass && gameState.stone >= cost.stone) {
       gameState.wood -= cost.wood;
       gameState.grass -= cost.grass;
       gameState.stone -= cost.stone;
-      gameState.houseLevel += 1;
-      addLog(`【好消息】小精灵依靠自己的双手，把家改造成了“${houseNames[gameState.houseLevel]}”！真棒！`);
-      updateUI();
-      saveGame();
+      gameState.rooms.push(name);
+      addLog(`【房屋改造】小精灵搭好了【${name}】！生活越来越舒适了。`);
+      updateUI(); saveGame();
     }
   }
 
-  // 自动挂机循环（每 5 秒自动搜集微量资源 & 恢复体力）
+  // 4. 厨房与烹饪熟练度
+  function cookFood() {
+    if (!gameState.rooms.includes("厨房")) { addLog("还没有厨房，无法烹饪。"); return; }
+    if (gameState.fruit < 2) { addLog("野果不够，无法烹饪(需要2个野果)。"); return; }
+    if (gameState.stamina < 10) { addLog("小精灵太累了，先吃点东西休息一下吧。"); return; }
+
+    gameState.fruit -= 2;
+    gameState.stamina -= 10;
+
+    // 成功率根据熟练度计算，最低 40% 成功率
+    const successRate = 0.4 + (gameState.cookExp / 100) * 0.6;
+    if (Math.random() < successRate) {
+      gameState.cooked += 1;
+      addLog("【烹饪成功】小精灵成功煮出了一碗热腾腾的烤果泥！");
+    } else {
+      addLog("【烹饪失败】不小心把果泥煮糊了...不过烹饪经验提升了！");
+    }
+
+    if (gameState.cookExp < 100) {
+      gameState.cookExp = Math.min(100, gameState.cookExp + 5);
+    }
+    updateUI(); saveGame();
+  }
+
+  // 手动搜集与工具
+  function manualGather() {
+    if (gameState.stamina < 5) { addLog("小精灵饿得搬不动树枝了，需要吃东西。"); return; }
+    gameState.stamina -= 5;
+    gameState.wood += 1;
+    gameState.grass += 1;
+    addLog("小精灵抱着一把树枝和干草回到了家。");
+    updateUI(); saveGame();
+  }
+
+  function craftWeapon() {
+    if (gameState.wood >= 5) {
+      gameState.wood -= 5;
+      gameState.weapon += 1;
+      addLog("小精灵削好了一把防身的小木棍。");
+      updateUI(); saveGame();
+    } else {
+      addLog("削木棍需要 5 个树枝。");
+    }
+  }
+
+  // 3. 自动化：小精灵自主出门远足
+  function autoExploreCheck() {
+    if (gameState.isExploring) return;
+
+    // 当有防身武器，且食物充裕、体力较高时，自主触发远足
+    if (gameState.weapon >= 1 && (gameState.fruit >= 2 || gameState.cooked >= 1) && gameState.stamina >= 60) {
+      gameState.isExploring = true;
+      if (gameState.cooked >= 1) gameState.cooked -= 1; else gameState.fruit -= 2;
+      
+      addLog("【自主远足】小精灵收拾好背包，带上小木棍，自主出门去森林深处探索了！");
+      updateUI();
+
+      setTimeout(() => {
+        gameState.isExploring = false;
+        const foundStone = Math.floor(Math.random() * 5) + 2;
+        const foundFruit = Math.floor(Math.random() * 4) + 1;
+        gameState.stone += foundStone;
+        gameState.fruit += foundFruit;
+        gameState.stamina = Math.max(10, gameState.stamina - 30);
+        addLog(`【远足归来】小精灵平安回家！带回了 ${foundStone} 块石头和 ${foundFruit} 颗野果。`);
+        updateUI(); saveGame();
+      }, 8000); // 远足耗时 8 秒
+    }
+  }
+
+  // 5. 动物串门与好感度/常驻机制
+  function animalVisitCheck() {
+    const keys = Object.keys(gameState.animals);
+    const key = keys[Math.floor(Math.random() * keys.length)];
+    const animal = gameState.animals[key];
+
+    // 如果拥有动物游乐角，串门概率与增加的好感度翻倍
+    const hasPetCorner = gameState.rooms.includes("动物游乐角");
+    const chance = hasPetCorner ? 0.4 : 0.2;
+
+    if (Math.random() < chance) {
+      if (!animal.isResident) {
+        const gain = hasPetCorner ? 15 : 8;
+        animal.favor = Math.min(100, animal.favor + gain);
+        addLog(`【来访】${animal.name} 来串门了！在家里开心地玩了一会儿。(好感度 +${gain}%)`);
+
+        if (animal.favor >= 100) {
+          animal.isResident = true;
+          addLog(`【新家人】${animal.name} 对这里感到非常温暖，决定搬过来和小精灵一起生活了！`);
+        }
+      }
+    }
+
+    // 已常驻入住的小动物，偶尔帮小精灵外出采集物资
+    keys.forEach(k => {
+      const a = gameState.animals[k];
+      if (a.isResident && Math.random() < 0.3) {
+        gameState.wood += 2;
+        gameState.grass += 2;
+        addLog(`【好帮手】住在家里的 ${a.name} 主动跑出去帮忙衔回了一些树枝和干草！`);
+      }
+    });
+  }
+
+  // 主循环
   function gameLoop() {
-    // 体力恢复
-    if (gameState.stamina < 100) gameState.stamina = Math.min(100, gameState.stamina + 2);
+    if (!gameState.isExploring) {
+      // 卧室加成：拥有睡房时挂机不消耗体力，没有时缓慢下降
+      if (!gameState.rooms.includes("睡房")) {
+        gameState.stamina = Math.max(0, gameState.stamina - 1);
+      }
+      
+      // 基础资源自动收集
+      gameState.wood += 1;
+      gameState.grass += 1;
 
-    // 根据房屋等级自动获得资源（挂机体验）
-    const rate = gameState.houseLevel + 1;
-    gameState.wood += rate;
-    gameState.grass += rate;
-
-    // 随机事件：小动物拜访
-    if (Math.random() < 0.15) {
-      triggerAnimalEvent();
+      // 触发自主出门检查与动物来访
+      autoExploreCheck();
+      animalVisitCheck();
     }
 
     updateUI();
     saveGame();
   }
 
-  // 随机小动物拜访事件
-  function triggerAnimalEvent() {
-    const events = [
-      "一只小松鼠跳到了窗台上，好奇地看了看小精灵，留下了一颗坚果。",
-      "一只避雨的小麻雀飞到了屋檐下，留下了一根五彩斑斓的羽毛作为礼物。",
-      "路过的小白兔在门口蹭了蹭，留下了几颗甜甜的野果。",
-      "夜空下的萤火虫飞过，为小精灵的小屋带来了微弱又温暖的光芒。"
-    ];
-    const randomIndex = Math.floor(Math.random() * events.length);
-    gameState.gift += 1;
-    gameState.fruit += 1;
-    addLog(`【温情时刻】${events[randomIndex]}`);
-  }
-
-  // 数据保存与读取（LocalStorage）
   function saveGame() {
     gameState.lastTime = Date.now();
-    localStorage.setItem('elf_game_save', JSON.stringify(gameState));
+    localStorage.setItem('elf_game_v2', JSON.stringify(gameState));
   }
 
   function loadGame() {
-    const saved = localStorage.getItem('elf_game_save');
+    const saved = localStorage.getItem('elf_game_v2');
     if (saved) {
       const parsed = JSON.parse(saved);
       gameState = { ...gameState, ...parsed };
-
-      // 计算离线挂机收益
-      const now = Date.now();
-      const offlineSeconds = Math.floor((now - gameState.lastTime) / 1000);
-      if (offlineSeconds > 10) {
-        const offlineGain = Math.min(Math.floor(offlineSeconds / 10), 100); // 离线上限100次
-        gameState.wood += offlineGain;
-        gameState.grass += offlineGain;
-        addLog(`在你离开的这段时间里，小精灵一直在默默忙碌，收集到了 ${offlineGain} 份树枝和干草。`);
-      }
+      addLog("欢迎回来，小精灵正在家里等着你呢。");
     } else {
-      addLog("四岁的小精灵在森林深处醒来，四周一片安静。你需要帮他准备食物和住房。");
+      addLog("四岁的小精灵在森林里醒来，独自一人。你需要帮他建造家园。");
     }
     updateUI();
   }
 
   function resetData() {
     if (confirm("确定要重置所有游戏进度吗？")) {
-      localStorage.removeItem('elf_game_save');
+      localStorage.removeItem('elf_game_v2');
       location.reload();
     }
   }
 
-  // 初始化游戏
   window.onload = () => {
     loadGame();
-    // 每 5 秒进行一次自动挂机结算
-    setInterval(gameLoop, 5000);
+    setInterval(gameLoop, 4000); // 4秒为一个挂机周期
   };
 </script>
 
