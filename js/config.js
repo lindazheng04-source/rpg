@@ -13,7 +13,7 @@ const roomCosts = {
   petcorner: { wood: 0, grass: 50, stone: 30, comfort: 35 }
 };
 
-// 房屋扩建配置 (每级扩建解锁更多房间容量)
+// 房屋等级与初始舒适度
 const houseUpgradeCosts = {
   1: { name: "简陋草棚", capacity: 1, wood: 0, grass: 0, stone: 0, comfort: 5 },
   2: { name: "温馨木屋", capacity: 2, wood: 40, grass: 30, stone: 20, comfort: 20 },
@@ -21,15 +21,14 @@ const houseUpgradeCosts = {
   4: { name: "森林庄园", capacity: 4, wood: 150, grass: 100, stone: 120, comfort: 80 }
 };
 
-// 特殊礼物池（动物拜访或居住时随机赠送）
+// 动物拜访可能留下的特殊珍贵礼物
 const specialGifts = [
-  { name: "闪亮的松果", effect: "纯好看的收藏品", wood: 5 },
-  { name: "五彩羽毛", effect: "可以用来装饰房间", grass: 10 },
-  { name: "幸运四叶草", effect: "象征着好运", fruit: 3 },
-  { name: "坚硬的圆石", effect: "打磨得很平整的石头", stone: 8 }
+  { name: "闪亮的松果", type: "collectible" },
+  { name: "五彩羽毛", type: "collectible" },
+  { name: "幸运四叶草", type: "collectible" },
+  { name: "光滑的鹅卵石", type: "collectible" }
 ];
 
-// 体力常量配置
 const STAMINA_WARNING_THRESHOLD = 50;
 const STAMINA_EXHAUSTED_THRESHOLD = 20;
 const REST_STAMINA_RECOVERY_INTERVAL = 30;
