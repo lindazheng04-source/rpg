@@ -1,10 +1,18 @@
 function checkAutoEat() {
   if (!gameState.autoEat) return;
   if (gameState.stamina < STAMINA_WARNING_THRESHOLD) {
-    if (gameState.cooked > 0) {
+    if (gameState.medicine > 0 && gameState.stamina < 30) {
+      gameState.medicine -= 1;
+      gameState.stamina = Math.min(100, gameState.stamina + 80);
+      addLog("【自动紧急治疗】小精灵伤势极重，自动使用了药品，体力恢复至 80+！");
+    } else if (gameState.cooked > 0) {
       gameState.cooked -= 1;
       gameState.stamina = Math.min(100, gameState.stamina + 50);
       addLog("【自动进食】小精灵有些疲惫，自动吃了一份熟食，恢复了 50 体力。");
+    } else if (gameState.meat > 0) {
+      gameState.meat -= 1;
+      gameState.stamina = Math.min(100, gameState.stamina + 25);
+      addLog("【自动进食】小精灵有些疲惫，自动吃了块干肉，恢复了 25 体力。");
     } else if (gameState.fruit > 0) {
       gameState.fruit -= 1;
       gameState.stamina = Math.min(100, gameState.stamina + 15);
@@ -25,7 +33,6 @@ function checkRestRecovery() {
   }
 }
 
-// 核心更新：受“背包容量”严格限制的出游与物资收获
 function elfAutoGatherCheck() {
   if (gameState.isExploring) return;
   if (gameState.stamina < 30) return;
@@ -33,12 +40,11 @@ function elfAutoGatherCheck() {
   if (Math.random() < 0.20) {
     gameState.isExploring = true;
 
-    // 1. 获取背包参数
     const currentBag = backpackSpecs[gameState.backpack || 'none'];
     const maxCapacity = currentBag.capacity;
 
-    // 2. 出门前携带干粮与木棍（若有物资，按背包规格携带）
     let takeLog = "";
+    let hasWeapon = false;
     if (gameState.cooked > 0) {
       gameState.cooked -= 1;
       takeLog = "，带上了一份熟食干粮";
@@ -47,7 +53,8 @@ function elfAutoGatherCheck() {
       takeLog = "，口袋里揣了 1 颗野果";
     }
 
-    if (gameState.weapon > 0 && Math.random() < 0.5) {
+    if (gameState.weapon > 0) {
+      hasWeapon = true;
       takeLog += "，手拿小木棍防身";
     }
 
@@ -57,32 +64,38 @@ function elfAutoGatherCheck() {
     setTimeout(() => {
       gameState.isExploring = false;
 
-      // 3. 计算获得的初始野外物资总重
       let rawWood = Math.floor(Math.random() * (maxCapacity / 2)) + 2;
       let rawGrass = Math.floor(Math.random() * (maxCapacity / 2)) + 2;
       let rawStone = Math.floor(Math.random() * (maxCapacity / 3)) + 1;
       let rawFruit = Math.floor(Math.random() * 3);
+      
+      // 有木棍时有概率打猎获得肉类
+      let rawMeat = (hasWeapon && Math.random() < 0.6) ? Math.floor(Math.random() * 2) + 1 : (Math.random() < 0.2 ? 1 : 0);
 
-      let totalWeight = rawWood + rawGrass + rawStone + rawFruit;
+      let totalWeight = rawWood + rawGrass + rawStone + rawFruit + rawMeat;
 
-      // 4. 背包负重截断处理：如果不幸超出背包容量上限，只能舍弃多余的物资带回最大容量
       if (totalWeight > maxCapacity) {
         const ratio = maxCapacity / totalWeight;
         rawWood = Math.floor(rawWood * ratio);
         rawGrass = Math.floor(rawGrass * ratio);
         rawStone = Math.floor(rawStone * ratio);
         rawFruit = Math.floor(rawFruit * ratio);
+        rawMeat = Math.floor(rawMeat * ratio);
       }
 
       gameState.wood += rawWood;
       gameState.grass += rawGrass;
       gameState.stone += rawStone;
       gameState.fruit += rawFruit;
+      gameState.meat += rawMeat;
 
       gameState.stamina = Math.max(10, gameState.stamina - 15);
 
-      let totalGathered = rawWood + rawGrass + rawStone + rawFruit;
-      addLog(`【远足归来】小精灵把【${currentBag.name}】装得满满的！带回了 ${rawWood}木 ${rawGrass}草 ${rawStone}石 ${rawFruit}果 (负重 ${totalGathered}/${maxCapacity})。`);
+      let totalGathered = rawWood + rawGrass + rawStone + rawFruit + rawMeat;
+      let resultText = `${rawWood}木 ${rawGrass}草 ${rawStone}石 ${rawFruit}果`;
+      if (rawMeat > 0) resultText += ` ${rawMeat}肉`;
+
+      addLog(`【远足归来】小精灵把【${currentBag.name}】装得满满的！带回了 ${resultText} (负重 ${totalGathered}/${maxCapacity})。`);
       
       gameState.lastActionTime = Date.now();
       updateUI(); saveGame();
