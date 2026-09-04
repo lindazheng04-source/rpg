@@ -170,6 +170,10 @@
 
     <!-- TAB 3: 技能 -->
     <div id="tab-skills" class="tab-content card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span class="title" style="margin-bottom:0; border-bottom:none;">⚡ 技能修炼</span>
+                <span style="font-size:0.8rem;">可用 SP: <span id="skill-tab-sp" style="color:var(--accent); font-weight:bold;">0</span></span>
+            </div>
         <div id="skill-list"></div>
     </div>
 
@@ -208,7 +212,7 @@
                 <div>⚡ 狂暴药剂</div>
                 <div class="item-desc">永久提升 5% 暴击率</div>
             </div>
-            <button type="button" class="btn-sm" onclick="buyElixir('crit', 300)">购买 (300💰)</button>
+            <button type="button" class="btn-sm" onclick="buyElixir('crit', 1000)">购买 (1000💰)</button>
         </div>
         <div class="item-row">
             <div>
@@ -276,14 +280,48 @@
     };
     let player = JSON.parse(JSON.stringify(defaultPlayer));
 
-    const defaultSkills = { heavy_strike: 0, toughness: 0, vampire: 0, lucky_star: 0 };
+    // 默认技能等级（0级表示未学习）
+    const defaultSkills = { heavy_strike: 0, toughness: 0, vampire: 0, lucky_star: 0, berserk: 0, iron_shield: 0 };
     let skills = JSON.parse(JSON.stringify(defaultSkills));
 
+    // 技能配置数据（支持等级增益与描述动态计算）
     const skillDefs = [
-        { id: "heavy_strike", name: "💥 强力重击", desc: "每3轮攻击必定触发一次200%倍率的物理重击" },
-        { id: "toughness", name: "🛡️ 坚韧血脉", desc: "生命值上限永久提升 15%" },
-        { id: "vampire", name: "🩸 汲血杀戮", desc: "每次攻击造成伤害的 10% 转化为自身 HP 恢复" },
-        { id: "lucky_star", name: "🌟 幸运星", desc: "暴击率增加 8%，且极度提升材料掉率" }
+        { 
+            id: "heavy_strike", 
+            name: "💥 强力重击", 
+            maxLv: 5,
+            getDesc: (lv) => `每 3 轮必定触发一次重击，造成 ${(150 + (lv || 1) * 50)}% 物理伤害`
+        },
+        { 
+            id: "toughness", 
+            name: "🛡️ 坚韧血脉", 
+            maxLv: 5,
+            getDesc: (lv) => `生命上限永久提升 ${(lv || 1) * 15}%`
+        },
+        { 
+            id: "vampire", 
+            name: "🩸 汲血杀戮", 
+            maxLv: 5,
+            getDesc: (lv) => `攻击造成伤害的 ${(lv || 1) * 5}% 转化为自身 HP 恢复`
+        },
+        { 
+            id: "lucky_star", 
+            name: "🌟 幸运星", 
+            maxLv: 5,
+            getDesc: (lv) => `暴击率 +${(lv || 1) * 5}%，且小概率提升材料掉率`
+        },
+        { 
+            id: "berserk", 
+            name: "🔥 狂暴战意", 
+            maxLv: 5,
+            getDesc: (lv) => `攻击力额外增加 ${(lv || 1) * 8} 点`
+        },
+        { 
+            id: "iron_shield", 
+            name: "🧱 铁壁守御", 
+            maxLv: 5,
+            getDesc: (lv) => `防御力额外增加 ${(lv || 1) * 5} 点`
+        }
     ];
 
     const defaultInventory = {
@@ -346,7 +384,7 @@
             monsters: [
                 { name: "熔岩火元素", hp: 800, atk: 140, exp: 400, gold: 200, drop: "volcano_stone" },
                 { name: "火山幼龙", hp: 1400, atk: 210, exp: 700, gold: 400, drop: "dragon_scale" },
-                { name: "👑 灭世红龙 (终极BOSS)", hp: 3500, atk: 380, exp: 2500, gold: 1500, drop: "dragon_scale", isBoss: true }
+                    { name: "👑 灭世红龙 (区域BOSS)", hp: 3500, atk: 380, exp: 2500, gold: 1500, drop: "dragon_scale", isBoss: true }
             ]
         },
         {
@@ -354,7 +392,7 @@
             monsters: [
                 { name: "星空噬体", hp: 2500, atk: 350, exp: 1200, gold: 800, drop: "refined_iron" },
                 { name: "虚空守卫", hp: 4200, atk: 520, exp: 2000, gold: 1300, drop: "dragon_scale" },
-                { name: "👑 星灵主宰 (终极BOSS)", hp: 10000, atk: 950, exp: 8000, gold: 5000, drop: "dragon_scale", isBoss: true }
+                { name: "👑 星灵主宰 (区域BOSS)", hp: 10000, atk: 950, exp: 8000, gold: 5000, drop: "dragon_scale", isBoss: true }
             ]
         }
     ];
@@ -515,23 +553,31 @@
 
         if (player.currentPet.type === 'heal') player.hp = Math.min(player.maxHp, player.hp + player.currentPet.val);
 
-        let totalAtk = player.atk + player.currentWeapon.stat + (player.currentPet.type === 'atk' ? player.currentPet.val : 0);
-        let totalCrit = player.critRate + (player.currentPet.type === 'crit' ? player.currentPet.val : 0) + (skills.lucky_star ? 8 : 0);
 
+        // 1. 狂暴战意 & 铁壁守御 属性加成（在攻击/防御计算时）
+        let skillAtkBonus = (skills.berserk || 0) * 8;
+        let skillDefBonus = (skills.iron_shield || 0) * 5;
+        
+        let totalAtk = player.atk + player.currentWeapon.stat + (player.currentPet.type === 'atk' ? player.currentPet.val : 0) + skillAtkBonus;
+        let totalCrit = player.critRate + (player.currentPet.type === 'crit' ? player.currentPet.val : 0) + ((skills.lucky_star || 0) * 5);
+        
+        // 2. 强力重击伤害倍率计算
         attackTurnCount++;
         let isHeavyStrike = skills.heavy_strike > 0 && (attackTurnCount % 3 === 0);
-        let isCrit = Math.random() * 100 < totalCrit;
-
+        let heavyMultiplier = 1.5 + (skills.heavy_strike * 0.5); // Lv1:200%, Lv2:250%...
+        
         let damageToMonster = totalAtk;
-        if (isHeavyStrike) damageToMonster *= 2.0;
+        if (isHeavyStrike) damageToMonster *= heavyMultiplier;
         if (isCrit) damageToMonster *= 1.8;
         if (currentWeather.id === "rain") damageToMonster *= 0.8;
 
         damageToMonster = Math.floor(damageToMonster);
         currentMonster.hp -= damageToMonster;
 
+        // 3. 吸血比例计算
         if (skills.vampire > 0) {
-            let healAmt = Math.floor(damageToMonster * 0.1);
+            let vampireRate = skills.vampire * 0.05; // 每级 5% 吸血
+            let healAmt = Math.floor(damageToMonster * vampireRate);
             player.hp = Math.min(player.maxHp, player.hp + healAmt);
         }
 
@@ -662,18 +708,35 @@
     }
 
     function learnSkill(skillId) {
-        if (player.sp <= 0) { alert("技能点(SP)不足！"); return; }
-        if (skills[skillId] > 0) { alert("已掌握该技能！"); return; }
-
-        player.sp--;
-        skills[skillId] = 1;
-
-        if (skillId === 'toughness') {
-            player.maxHp = Math.floor(player.maxHp * 1.15);
-            player.hp = player.maxHp;
+        let def = skillDefs.find(s => s.id === skillId);
+        let currentLv = skills[skillId] || 0;
+        
+        if (currentLv >= def.maxLv) { 
+            alert("该技能已达到最高等级！"); 
+            return; 
         }
 
-        addLog(`⚡ 成功领悟【${skillDefs.find(s=>s.id===skillId).name}】！`);
+        // 计算升级所需的 SP（例如：升到第 1 级要 1 点，升到第 2 级要 2 点...）
+        let costSp = currentLv + 1;
+        
+        if (player.sp < costSp) { 
+            alert(`技能点(SP)不足！升级需要 ${costSp} 点 SP。`); 
+            return; 
+        }
+
+        // 扣除对应数量的 SP 并提升技能等级
+        player.sp -= costSp;
+        skills[skillId] = currentLv + 1;
+        
+        // 针对坚韧血脉（生命上限加成）实时修正 HP
+        if (skillId === 'toughness') {
+            let hpRatio = player.hp / player.maxHp;
+            let bonus = 1 + (skills.toughness * 0.15);
+            player.maxHp = Math.floor((100 + (player.level - 1) * 30) * bonus);
+            player.hp = Math.min(player.maxHp, Math.floor(player.maxHp * hpRatio));
+        }
+
+        addLog(`⚡ 【${def.name}】 成功升级至 Lv.${skills[skillId]}！(消耗 ${costSp} SP)`);
         saveGame();
         updateUI();
     }
@@ -925,21 +988,35 @@
         renderCraftList();
         renderCodex();
     }
-
+    
     function renderSkillList() {
         let skillBox = document.getElementById("skill-list");
+        let spText = document.getElementById("skill-tab-sp");
+        if (spText) spText.innerText = player.sp;
+        
         let html = "";
         skillDefs.forEach(s => {
-            let learned = skills[s.id] > 0;
+            let lv = skills[s.id] || 0;
+            let isMax = lv >= s.maxLv;
+            let costSp = lv + 1; // 当前升级所需 SP
+            let desc = s.getDesc(lv > 0 ? lv : 1);
+        
             html += `
                 <div class="item-row">
                     <div>
-                        <div>${s.name} ${learned ? '<span style="color:var(--exp-color); font-size:0.7rem;">[已学会]</span>' : ''}</div>
-                        <div class="item-desc">${s.desc}</div>
+                        <div>
+                            ${s.name} 
+                            <span style="color:var(--accent); font-weight:bold; font-size:0.75rem;">
+                                [Lv.${lv}/${s.maxLv}]
+                            </span>
+                        </div>
+                        <div class="item-desc">${desc}</div>
                     </div>
-                    <button type="button" class="btn-sm ${learned ? 'btn-off' : ''}" onclick="learnSkill('${s.id}')">
-                        ${learned ? '已掌握' : '学习 (1 SP)'}
-                    </button>
+                    <div style="min-width: 90px; text-align: right;">
+                        <button type="button" class="btn-sm ${isMax ? 'btn-off' : ''}" onclick="learnSkill('${s.id}')" ${isMax ? 'disabled' : ''}>
+                            ${isMax ? '已满级' : `升级 (${costSp} SP)`}
+                        </button>
+                    </div>
                 </div>
             `;
         });
