@@ -8,9 +8,12 @@ function checkAutoEat() {
       return;
     }
 
+    // 安全检查 foods 对象是否存在
+    const foods = gameState.foods || {};
+
     // 优先食用更高级的熟食
     for (let key of ['meatStew', 'roastedMeat', 'fruitMashing']) {
-      if ((gameState.foods[key] || 0) > 0) {
+      if ((foods[key] || 0) > 0) {
         const recipe = foodRecipes[key];
         gameState.foods[key] -= 1;
         gameState.stamina = Math.min(100, gameState.stamina + recipe.stamina);
@@ -44,10 +47,14 @@ function checkRestRecovery() {
 }
 
 function elfAutoGatherCheck() {
+  // 如果已经在远足中，直接跳过
   if (gameState.isExploring) return;
+
+  // 体力不足 30 时无法出门
   if (gameState.stamina < 30) return;
 
-  if (Math.random() < 0.20) {
+  // 25% 概率决定是否触发远足
+  if (Math.random() < 0.25) {
     gameState.isExploring = true;
 
     const currentBag = backpackSpecs[gameState.backpack || 'none'] || backpackSpecs['none'];
@@ -56,10 +63,19 @@ function elfAutoGatherCheck() {
     let takeLog = "";
     let hasWeapon = false;
     
-    // 携带食物带出门
-    if (gameState.foods.meatStew > 0) {
+    // 安全检查 foods 结构
+    const foods = gameState.foods || {};
+
+    // 携带食物带出门（加防空安全链）
+    if ((foods.meatStew || 0) > 0) {
       gameState.foods.meatStew -= 1;
       takeLog = "，带上了森林杂烩汤干粮";
+    } else if ((foods.roastedMeat || 0) > 0) {
+      gameState.foods.roastedMeat -= 1;
+      takeLog = "，带上了香喷喷烤肉";
+    } else if ((foods.fruitMashing || 0) > 0) {
+      gameState.foods.fruitMashing -= 1;
+      takeLog = "，带上了甘甜果泥";
     } else if (gameState.fruit > 0) {
       gameState.fruit -= 1;
       takeLog = "，揣了 1 颗野果";
@@ -73,6 +89,7 @@ function elfAutoGatherCheck() {
     addLog(`【自主远足】小精灵背上【${currentBag.name}】出发了${takeLog}...`);
     updateUI();
 
+    // 6秒后远足归来
     setTimeout(() => {
       gameState.isExploring = false;
 
@@ -84,6 +101,7 @@ function elfAutoGatherCheck() {
 
       let totalWeight = rawWood + rawGrass + rawStone + rawFruit + rawMeat;
 
+      // 负重超限截断计算
       if (totalWeight > maxCapacity && totalWeight > 0) {
         const ratio = maxCapacity / totalWeight;
         rawWood = Math.floor(rawWood * ratio);
