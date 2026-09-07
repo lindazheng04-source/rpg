@@ -4,19 +4,29 @@ function checkAutoEat() {
     if (gameState.medicine > 0 && gameState.stamina < 30) {
       gameState.medicine -= 1;
       gameState.stamina = Math.min(100, gameState.stamina + 80);
-      addLog("【自动紧急治疗】小精灵伤势极重，自动使用了药品，体力恢复至 80+！");
-    } else if (gameState.cooked > 0) {
-      gameState.cooked -= 1;
-      gameState.stamina = Math.min(100, gameState.stamina + 50);
-      addLog("【自动进食】小精灵有些疲惫，自动吃了一份熟食，恢复了 50 体力。");
-    } else if (gameState.meat > 0) {
+      addLog("【自动紧急治疗】小精灵伤势极重，使用了药品！");
+      return;
+    }
+
+    // 优先食用更高级的熟食
+    for (let key of ['meatStew', 'roastedMeat', 'fruitMashing']) {
+      if ((gameState.foods[key] || 0) > 0) {
+        const recipe = foodRecipes[key];
+        gameState.foods[key] -= 1;
+        gameState.stamina = Math.min(100, gameState.stamina + recipe.stamina);
+        addLog(`【自动进食】小精灵有些疲惫，自动吃了【${recipe.name}】，恢复了 ${recipe.stamina} 点体力。`);
+        return;
+      }
+    }
+
+    if (gameState.meat > 0) {
       gameState.meat -= 1;
       gameState.stamina = Math.min(100, gameState.stamina + 25);
-      addLog("【自动进食】小精灵有些疲惫，自动吃了块干肉，恢复了 25 体力。");
+      addLog("【自动进食】小精灵吃了块干肉，恢复了 25 体力。");
     } else if (gameState.fruit > 0) {
       gameState.fruit -= 1;
       gameState.stamina = Math.min(100, gameState.stamina + 15);
-      addLog("【自动进食】小精灵有些疲惫，自动啃了一颗野果，恢复了 15 体力。");
+      addLog("【自动进食】小精灵啃了颗野果，恢复了 15 体力。");
     }
   }
 }
@@ -45,12 +55,14 @@ function elfAutoGatherCheck() {
 
     let takeLog = "";
     let hasWeapon = false;
-    if (gameState.cooked > 0) {
-      gameState.cooked -= 1;
-      takeLog = "，带上了一份熟食干粮";
+    
+    // 携带食物带出门
+    if (gameState.foods.meatStew > 0) {
+      gameState.foods.meatStew -= 1;
+      takeLog = "，带上了森林杂烩汤干粮";
     } else if (gameState.fruit > 0) {
       gameState.fruit -= 1;
-      takeLog = "，口袋里揣了 1 颗野果";
+      takeLog = "，揣了 1 颗野果";
     }
 
     if (gameState.weapon > 0) {
@@ -68,7 +80,6 @@ function elfAutoGatherCheck() {
       let rawGrass = Math.floor(Math.random() * (maxCapacity / 2)) + 2;
       let rawStone = Math.floor(Math.random() * (maxCapacity / 3)) + 1;
       let rawFruit = Math.floor(Math.random() * 3);
-      
       let rawMeat = (hasWeapon && Math.random() < 0.6) ? Math.floor(Math.random() * 2) + 1 : (Math.random() < 0.2 ? 1 : 0);
 
       let totalWeight = rawWood + rawGrass + rawStone + rawFruit + rawMeat;
@@ -110,7 +121,6 @@ function animalVisitCheck() {
 
   const key = keys[Math.floor(Math.random() * keys.length)];
   const animal = gameState.animals[key];
-
   if (!animal) return;
 
   const comfort = typeof getHouseComfort === 'function' ? getHouseComfort() : 5;
@@ -139,7 +149,7 @@ function animalVisitCheck() {
           
           if (!gameState.specialItems.includes(gift.name)) {
             gameState.specialItems.push(gift.name);
-            dropLog = `，并悄悄在桌上留下了极其珍贵的礼物【${gift.name}】！`;
+            dropLog = `，并在桌上留下了礼物【${gift.name}】！`;
           } else {
             gameState.stone += 2;
             dropLog = "，顺路带回了 2 块平整的石头";
@@ -151,7 +161,7 @@ function animalVisitCheck() {
 
       if (animal.favor >= 100) {
         animal.isResident = true;
-        addLog(`【新家人】${animal.name} 对你温馨的家非常满意，决定搬过来和小精灵一起生活了！`);
+        addLog(`【新家人】${animal.name} 决定搬过来和小精灵一起生活了！`);
       }
     }
   }
@@ -174,7 +184,6 @@ function gameLoop() {
     animalVisitCheck();
   }
   updateUI();
-  // 不在主循环中高频存储，由重要操作触发
 }
 
 window.onload = () => {
@@ -182,6 +191,5 @@ window.onload = () => {
   gameState.lastActionTime = Date.now();
   updateUI();
   setInterval(gameLoop, 4000);
-  // 改为每 30 秒定期自动保存
   setInterval(saveGame, 30000);
 };
