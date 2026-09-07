@@ -22,7 +22,9 @@
         <div>🪨 石头: <span id="res-stone">0</span></div>
         <div>🍒 野果: <span id="res-fruit">0</span></div>
         <div>🍖 肉类: <span id="res-meat">0</span></div>
-        <div>🍲 熟食: <span id="res-cooked">0</span></div>
+        <div>🥣 果泥: <span id="res-fruitMashing">0</span></div>
+        <div>🍖 烤肉: <span id="res-roastedMeat">0</span></div>
+        <div>🍲 杂烩汤: <span id="res-meatStew">0</span></div>
         <div>💊 药品: <span id="res-medicine">0</span></div>
         <div>🗡️ 木棍: <span id="res-weapon">0</span></div>
       </div>
@@ -30,7 +32,6 @@
         <div>🏠 房屋规模：<span id="house-level-info">简陋草棚</span></div>
         <div>🎒 装备背包：<span id="backpack-info">无背包 (负重: 5)</span></div>
         <div>✨ 家园舒适度：<span id="house-comfort-info">5 点</span></div>
-        <div>🍳 烹饪熟练度：<span id="cook-exp">0</span>%</div>
       </div>
     </div>
 
@@ -38,29 +39,44 @@
     <div class="section-box">
       <h3>🛠️ 玩家工作台 (利用已有物资帮小精灵制作/建造)</h3>
       
-      <!-- 进食与药品使用 -->
+      <!-- 基础进食 -->
       <div class="button-group">
         <button id="btn-eat-fruit" onclick="eatFruit()">🍎 喂野果 (+15体力)</button>
-        <button id="btn-eat-meat" onclick="eatMeat()">🍖 喂肉块 (+25体力)</button>
-        <button id="btn-eat-cooked" onclick="eatCooked()">🍲 喂烤肉果泥 (+50体力)</button>
+        <button id="btn-eat-meat" onclick="eatMeat()">🍖 喂生肉 (+25体力)</button>
+        <button id="btn-eat-fruitMashing" onclick="eatFood('fruitMashing')">🥣 喂甘甜果泥 (+20体力)</button>
+        <button id="btn-eat-roastedMeat" onclick="eatFood('roastedMeat')">🍖 喂香喷喷烤肉 (+35体力)</button>
+        <button id="btn-eat-meatStew" onclick="eatFood('meatStew')">🍲 喂森林杂烩汤 (+60体力)</button>
         <button id="btn-use-medicine" onclick="useMedicine()">💊 喂服草药膏 (+80体力)</button>
         <button onclick="toggleAutoEat()">🍱 切换/开启自动进食</button>
       </div>
 
-      <!-- 物品制作与烹饪 -->
-      <h4 style="margin-top: 15px;">🔨 基础制作与烹饪</h4>
+      <!-- 独立烹饪与熟练度 -->
+      <h4 style="margin-top: 15px;">🍳 厨房烹饪 (每种料理单独提升熟练度)</h4>
+      <div class="button-group">
+        <button id="btn-cook-fruitMashing" onclick="cookFood('fruitMashing')">
+          🥣 做甘甜果泥 (2果 | 熟练度: <span id="exp-fruitMashing">0%</span>)
+        </button>
+        <button id="btn-cook-roastedMeat" onclick="cookFood('roastedMeat')">
+          🍖 做香喷喷烤肉 (2肉 | 熟练度: <span id="exp-roastedMeat">0%</span>)
+        </button>
+        <button id="btn-cook-meatStew" onclick="cookFood('meatStew')">
+          🍲 煮森林杂烩汤 (2果 2肉 | 熟练度: <span id="exp-meatStew">0%</span>)
+        </button>
+      </div>
+
+      <!-- 装备与制药 -->
+      <h4 style="margin-top: 15px;">🔨 装备与制作</h4>
       <div class="button-group">
         <button id="btn-craft-medicine" onclick="craftMedicine()">💊 炼制草药膏 (3干草 1野果)</button>
-        <button id="btn-cook" onclick="cookFood()">🍳 烹饪烤肉果泥 (1野果 1肉类 + 厨房)</button>
         <button id="btn-weapon" onclick="craftWeapon()">🗡️ 削制小木棍 (5树枝)</button>
       </div>
 
       <!-- 背包制作 -->
-      <h4 style="margin-top: 15px;">🎒 背包缝制 (决定外出采集负重上限)</h4>
+      <h4 style="margin-top: 15px;">🎒 背包缝制</h4>
       <div class="button-group">
-        <button id="btn-bag-straw" onclick="craftBackpack('straw')">缝制编织草袋 (20草 | 负重15)</button>
-        <button id="btn-bag-leather" onclick="craftBackpack('leather')">缝制简易藤包 (35草 25木 | 负重35)</button>
-        <button id="btn-bag-sturdy" onclick="craftBackpack('sturdy')">缝制坚固皮包 (40草 40木 5肉 | 负重70)</button>
+        <button id="btn-bag-straw" onclick="craftBackpack('straw')">编织草袋 (20草)</button>
+        <button id="btn-bag-leather" onclick="craftBackpack('leather')">简易藤包 (35草 25木)</button>
+        <button id="btn-bag-sturdy" onclick="craftBackpack('sturdy')">坚固皮包 (40草 40木 5肉)</button>
       </div>
 
       <!-- 房屋扩建与房间建造 -->
