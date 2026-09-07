@@ -11,7 +11,6 @@ function eatFruit() {
   updateActionTime(); updateUI(); saveGame();
 }
 
-// 恢复：吃肉类
 function eatMeat() {
   if (gameState.meat < 1) { addLog("没有生肉了。"); return; }
   if (gameState.stamina >= 100) { addLog("小精灵肚子饱饱的，吃不下了。"); return; }
@@ -21,18 +20,67 @@ function eatMeat() {
   updateActionTime(); updateUI(); saveGame();
 }
 
-function eatCooked() {
-  if (gameState.cooked < 1) { addLog("没有熟食了，去厨房做一份吧！"); return; }
-  if (gameState.stamina >= 100) { addLog("小精灵肚子饱饱的，吃不下了。"); return; }
-  gameState.cooked -= 1;
-  gameState.stamina = Math.min(100, gameState.stamina + 50);
-  addLog("你给小精灵端上了一碗香喷喷的热熟食，恢复了 50 点体力！");
+// 统一烹饪食物处理函数（使用单独食物的熟练度计算成功率）
+function cookFood(recipeId) {
+  const recipe = foodRecipes[recipeId];
+  if (!recipe) return;
+
+  if (!gameState.rooms.includes("厨房")) {
+    addLog("还没有厨房，无法烹饪。请先建造厨房！");
+    return;
+  }
+
+  // 检查物资
+  if (gameState.fruit < recipe.cost.fruit || gameState.meat < recipe.cost.meat) {
+    addLog(`烹饪【${recipe.name}】的食材不足！`);
+    return;
+  }
+
+  // 扣除物资
+  gameState.fruit -= recipe.cost.fruit;
+  gameState.meat -= recipe.cost.meat;
+
+  // 根据当前食物独立的熟练度算成功率
+  const currentExp = gameState.recipeExp[recipeId] || 0;
+  const successRate = recipe.baseSuccess + (currentExp / 100) * (1 - recipe.baseSuccess);
+
+  if (Math.random() < successRate) {
+    gameState.foods[recipeId] = (gameState.foods[recipeId] || 0) + 1;
+    addLog(`【烹饪成功】你精心做出了【${recipe.name}】！`);
+  } else {
+    addLog(`【烹饪失败】不小心把【${recipe.name}】给做糊了...但熟练度提升了！`);
+  }
+
+  // 提升该食物专属的烹饪熟练度
+  if (currentExp < 100) {
+    gameState.recipeExp[recipeId] = Math.min(100, currentExp + 8);
+  }
+
   updateActionTime(); updateUI(); saveGame();
 }
 
-// 恢复：使用药品
+// 吃特定熟食
+function eatFood(recipeId) {
+  const recipe = foodRecipes[recipeId];
+  if (!recipe) return;
+
+  if ((gameState.foods[recipeId] || 0) < 1) {
+    addLog(`没有【${recipe.name}】了，快去厨房做一份吧！`);
+    return;
+  }
+  if (gameState.stamina >= 100) {
+    addLog("小精灵肚子饱饱的，吃不下了。");
+    return;
+  }
+
+  gameState.foods[recipeId] -= 1;
+  gameState.stamina = Math.min(100, gameState.stamina + recipe.stamina);
+  addLog(`你喂小精灵吃了【${recipe.name}】，恢复了 ${recipe.stamina} 点体力！`);
+  updateActionTime(); updateUI(); saveGame();
+}
+
 function useMedicine() {
-  if (gameState.medicine < 1) { addLog("没有药品了，请先用草药制药。"); return; }
+  if (gameState.medicine < 1) { addLog("没有药品了。"); return; }
   if (gameState.stamina >= 100) { addLog("小精灵精神棒棒的，不需要吃药。"); return; }
   gameState.medicine -= 1;
   gameState.stamina = Math.min(100, gameState.stamina + 80);
@@ -40,7 +88,6 @@ function useMedicine() {
   updateActionTime(); updateUI(); saveGame();
 }
 
-// 恢复：制作药品 (需干草和野果)
 function craftMedicine() {
   if (gameState.grass < 3 || gameState.fruit < 1) {
     addLog("制作药品需要 3 份干草和 1 个野果。");
@@ -66,7 +113,7 @@ function craftWeapon() {
   }
   gameState.wood -= 5;
   gameState.weapon += 1;
-  addLog("【玩家制作】你利用树枝为小精灵削好了一把防身的小木棍！");
+  addLog("【玩家制作】你利用树枝削好了一把防身的小木棍！");
   updateActionTime(); updateUI(); saveGame();
 }
 
@@ -84,32 +131,11 @@ function craftBackpack(type) {
     gameState.grass -= spec.grass;
     gameState.meat -= needMeat;
     gameState.backpack = type;
-    addLog(`【制作装备】你缝制了【${spec.name}】给小精灵背上！出远门负重上限提升至 ${spec.capacity} 点。`);
+    addLog(`【制作装备】你缝制了【${spec.name}】！负重上限提升至 ${spec.capacity} 点。`);
     updateActionTime(); updateUI(); saveGame();
   } else {
     addLog("制作该背包的材料不足。");
   }
-}
-
-function cookFood() {
-  if (!gameState.rooms.includes("厨房")) { addLog("还没有厨房，无法烹饪。请先为小精灵建造厨房。"); return; }
-  if (gameState.fruit < 1 || gameState.meat < 1) { addLog("烹饪烤肉果泥需要 1 个野果和 1 份肉类。"); return; }
-
-  gameState.fruit -= 1;
-  gameState.meat -= 1;
-
-  const successRate = 0.4 + (gameState.cookExp / 100) * 0.6;
-  if (Math.random() < successRate) {
-    gameState.cooked += 1;
-    addLog("【玩家烹饪】你成功煮出了一碗香气四溢的烤肉果泥！");
-  } else {
-    addLog("【烹饪失败】不小心把肉煮糊了...不过你的烹饪经验提升了！");
-  }
-
-  if (gameState.cookExp < 100) {
-    gameState.cookExp = Math.min(100, gameState.cookExp + 5);
-  }
-  updateActionTime(); updateUI(); saveGame();
 }
 
 function upgradeHouse() {
@@ -122,7 +148,7 @@ function upgradeHouse() {
     gameState.grass -= nextCost.grass;
     gameState.stone -= nextCost.stone;
     gameState.houseLevel = nextLevel;
-    addLog(`【房屋扩建】你帮小精灵把家扩建为了【${nextCost.name}】！可以建造更多房间了。`);
+    addLog(`【房屋扩建】你帮小精灵把家扩建为了【${nextCost.name}】！`);
     updateActionTime(); updateUI(); saveGame();
   } else {
     addLog("扩建物资不足。");
@@ -132,7 +158,7 @@ function upgradeHouse() {
 function buildRoom(type) {
   const currentCapacity = houseUpgradeCosts[gameState.houseLevel].capacity;
   if (gameState.rooms.length >= currentCapacity) {
-    addLog("房屋空间不够了！请先【扩建房屋】以解锁更多房间位置。");
+    addLog("房屋空间不够了！请先【扩建房屋】。");
     return;
   }
 
@@ -145,7 +171,7 @@ function buildRoom(type) {
     gameState.grass -= cost.grass;
     gameState.stone -= cost.stone;
     gameState.rooms.push(name);
-    addLog(`【家园建造】你为小精灵盖好了【${name}】！家里的舒适度提升了 ${cost.comfort} 点！`);
+    addLog(`【家园建造】你建造了【${name}】！舒适度 +${cost.comfort} 点！`);
     updateActionTime(); updateUI(); saveGame();
   } else {
     addLog("建造物资不足。");
