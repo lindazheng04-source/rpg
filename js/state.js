@@ -4,11 +4,21 @@ let gameState = {
   stone: 0,
   fruit: 5,
   meat: 0,
-  cooked: 0,
   medicine: 0,
   weapon: 0,
+  // 各种烹饪食物的库存数量
+  foods: {
+    fruitMashing: 0,
+    roastedMeat: 0,
+    meatStew: 0
+  },
+  // 每种食物独有的烹饪熟练度 (0 - 100)
+  recipeExp: {
+    fruitMashing: 0,
+    roastedMeat: 0,
+    meatStew: 0
+  },
   stamina: 100,
-  cookExp: 0,
   houseLevel: 1,
   backpack: "none",
   specialItems: [],
@@ -50,10 +60,11 @@ function loadGame() {
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
-      // 安全深层合并，防止旧存档缺乏结构崩溃
       gameState = { 
         ...gameState, 
         ...parsed,
+        foods: { ...gameState.foods, ...(parsed.foods || {}) },
+        recipeExp: { ...gameState.recipeExp, ...(parsed.recipeExp || {}) },
         animals: { ...gameState.animals, ...(parsed.animals || {}) },
         rooms: parsed.rooms || [],
         specialItems: parsed.specialItems || []
