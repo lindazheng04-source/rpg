@@ -40,7 +40,7 @@ function elfAutoGatherCheck() {
   if (Math.random() < 0.20) {
     gameState.isExploring = true;
 
-    const currentBag = backpackSpecs[gameState.backpack || 'none'];
+    const currentBag = backpackSpecs[gameState.backpack || 'none'] || backpackSpecs['none'];
     const maxCapacity = currentBag.capacity;
 
     let takeLog = "";
@@ -69,12 +69,11 @@ function elfAutoGatherCheck() {
       let rawStone = Math.floor(Math.random() * (maxCapacity / 3)) + 1;
       let rawFruit = Math.floor(Math.random() * 3);
       
-      // 有木棍时有概率打猎获得肉类
       let rawMeat = (hasWeapon && Math.random() < 0.6) ? Math.floor(Math.random() * 2) + 1 : (Math.random() < 0.2 ? 1 : 0);
 
       let totalWeight = rawWood + rawGrass + rawStone + rawFruit + rawMeat;
 
-      if (totalWeight > maxCapacity) {
+      if (totalWeight > maxCapacity && totalWeight > 0) {
         const ratio = maxCapacity / totalWeight;
         rawWood = Math.floor(rawWood * ratio);
         rawGrass = Math.floor(rawGrass * ratio);
@@ -98,15 +97,21 @@ function elfAutoGatherCheck() {
       addLog(`【远足归来】小精灵把【${currentBag.name}】装得满满的！带回了 ${resultText} (负重 ${totalGathered}/${maxCapacity})。`);
       
       gameState.lastActionTime = Date.now();
-      updateUI(); saveGame();
+      updateUI(); 
+      saveGame();
     }, 6000);
   }
 }
 
 function animalVisitCheck() {
+  if (!gameState.animals) return;
   const keys = Object.keys(gameState.animals);
+  if (keys.length === 0) return;
+
   const key = keys[Math.floor(Math.random() * keys.length)];
   const animal = gameState.animals[key];
+
+  if (!animal) return;
 
   const comfort = typeof getHouseComfort === 'function' ? getHouseComfort() : 5;
   const visitChance = Math.min(0.25, 0.03 + (comfort / 10) * 0.012);
@@ -153,7 +158,7 @@ function animalVisitCheck() {
 
   keys.forEach(k => {
     const a = gameState.animals[k];
-    if (a.isResident && Math.random() < 0.08) {
+    if (a && a.isResident && Math.random() < 0.08) {
       gameState.wood += 2;
       gameState.grass += 1;
       addLog(`【好帮手】住在家里的 ${a.name} 跑出去帮忙衔回了一些干草和树枝。`);
@@ -169,7 +174,7 @@ function gameLoop() {
     animalVisitCheck();
   }
   updateUI();
-  saveGame();
+  // 不在主循环中高频存储，由重要操作触发
 }
 
 window.onload = () => {
@@ -177,4 +182,6 @@ window.onload = () => {
   gameState.lastActionTime = Date.now();
   updateUI();
   setInterval(gameLoop, 4000);
+  // 改为每 30 秒定期自动保存
+  setInterval(saveGame, 30000);
 };
