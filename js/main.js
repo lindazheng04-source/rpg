@@ -194,54 +194,68 @@ function animalVisitCheck() {
   });
 }
 
-// 随机轮换季节与天气
+// 天气与季节随机轮换
 function updateWeatherAndSeason() {
-  // 每次触发有 15% 概率切换天气
+  // 15% 概率触发天气变幻
   if (Math.random() < 0.15) {
-    const pool = SEASON_WEATHER_POOL[gameState.season] || SEASON_WEATHER_POOL.spring;
-    const newWeather = pool[Math.floor(Math.random() * pool.length)];
+    const pool = SEASON_WEATHER_POOLS[gameState.season] || SEASON_WEATHER_POOLS.spring;
+    const newWeatherKey = pool[Math.floor(Math.random() * pool.length)];
     
-    if (newWeather !== gameState.weather) {
-      gameState.weather = newWeather;
-      const wInfo = WEATHERS[newWeather];
-      addLog(`【天气变化】森林里的天气转为了【${wInfo.name}】。`);
+    if (newWeatherKey !== gameState.weather) {
+      gameState.weather = newWeatherKey;
+      const wInfo = WEATHERS[newWeatherKey];
+      addLog(`【天气变化】森林里的天气转为了【${wInfo.name}】—— ${wInfo.desc}`);
+
+      // 极端气象特殊一次性效果：
+      if (newWeatherKey === 'gale') {
+        // 大风吹落干草和木材
+        const bonusWood = Math.floor(Math.random() * 5) + 3;
+        gameState.wood += bonusWood;
+        addLog(`【大风福利】一阵狂风吹过，树梢上掉落下了 ${bonusWood} 根树枝！`);
+      } else if (newWeatherKey === 'dew') {
+        // 露水湿润，野果生长
+        gameState.fruit += 2;
+        addLog(`【晨露滋润】清晨的露水滋养了植物，小精灵在门口捡到了 2 颗野果！`);
+      }
     }
 
-    // 推进季节日子（每 20 次天气变幻推进 1 天）
+    // 推进天数与季节切换
     gameState.seasonDay = (gameState.seasonDay || 1) + 1;
-    if (gameState.seasonDay > 5) { // 5 天换一个季节
+    if (gameState.seasonDay > 5) {
       gameState.seasonDay = 1;
       const seasonKeys = ['spring', 'summer', 'autumn', 'winter'];
       let nextIdx = (seasonKeys.indexOf(gameState.season) + 1) % seasonKeys.length;
       gameState.season = seasonKeys[nextIdx];
-      addLog(`【季节更替】季节交替，迎来了【${SEASONS[gameState.season].name}】！`);
+      addLog(`【季节更替】大地转换了色彩，迎来了【${SEASONS[gameState.season].name}】！`);
     }
   }
 }
 
-// 在 elfAutoGatherCheck 函数开头加入天气判定：
+// 修改小精灵自动远足逻辑中的天气校验
 function elfAutoGatherCheck() {
   if (gameState.isExploring) return;
 
-  // 极端天气（台风/暴风雪）禁止出门
   const currentWeather = WEATHERS[gameState.weather] || WEATHERS.sunny;
+
+  // 如果天气不允许出门（如暴雨、台风、龙卷风、冰雹等）
   if (!currentWeather.canGather) {
-    if (Math.random() < 0.1) {
-      addLog(`【天气恶劣】外面正刮着【${currentWeather.name}】，小精灵乖乖待在家里不敢出门。`);
+    if (Math.random() < 0.08) {
+      addLog(`【预警】外面正值【${currentWeather.name}】，环境极其危险，小精灵躲在小屋里不便出门。`);
     }
     return;
   }
 
-  // 计算季节与天气对体力消耗的叠加影响
+  // 动态计算该天气和季节下的体力消耗
   const seasonCfg = SEASONS[gameState.season] || SEASONS.spring;
   const baseStaminaCost = 15;
   const actualCost = Math.floor(baseStaminaCost * seasonCfg.staminaCostRate * currentWeather.staminaMod);
-  
+
   if (gameState.stamina < actualCost) return;
 
-  // ... 原有的 25% 概率触发远足逻辑
-  // 扣体力时使用计算好的实际消耗：
-  // gameState.stamina = Math.max(10, gameState.stamina - actualCost);
+  // 触发远足
+  if (Math.random() < 0.25) {
+    // ... 触发远足并扣除 actualCost 体力
+  }
 }
 
 function gameLoop() {
