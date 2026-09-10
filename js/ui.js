@@ -62,13 +62,51 @@ function updateUI() {
     specialContainer.innerHTML = (gameState.specialItems || []).map(item => `<span class="room-tag" style="background:#e8f4f8; border-color:#bee3f8; color:#2b6cb0;">🎁 ${item}</span>`).join('') || '<span style="color:#888;">暂无藏品</span>';
   }
 
-  // 动物列表
+  const biomeContainer = document.getElementById('biome-button-group');
+if (biomeContainer) {
+  biomeContainer.innerHTML = Object.keys(BIOMES).map(bKey => {
+    const b = BIOMES[bKey];
+    const isUnlocked = gameState.unlockedBiomes.includes(bKey);
+    const isCurrent = gameState.currentBiome === bKey;
+
+    if (isCurrent) {
+      return `<button disabled style="background:#b58a63; color:#fff;">📍 当前: ${b.name}</button>`;
+    } else if (isUnlocked) {
+      return `<button onclick="travelToBiome('${bKey}')">✈️ 前往 ${b.name}</button>`;
+    } else {
+      return `<button onclick="travelToBiome('${bKey}')">🔨 建造${b.vehicle||'载具'}以前往 ${b.name}</button>`;
+    }
+  }).join('');
+}
+  
+  // 渲染包含打工与培养的动物卡片
   const animalContainer = document.getElementById('animal-list');
   if (animalContainer && gameState.animals) {
     animalContainer.innerHTML = Object.keys(gameState.animals).map(k => {
       const a = gameState.animals[k];
+      const spec = ANIMAL_SPECIES[k] || {};
+      const lvl = a.level || 1;
+      
+      if (!a.isResident) {
+        return `<div class="animal-card">
+        <b>${a.name}</b> (${BIOMES[spec.biome]?.name || '未知地区'}) - 好感度: ${a.favor}% (尚未入住)
+        </div>`;
+      }
+
       return `<div class="animal-card">
-        <b>${a.name}</b> - 好感度: ${a.favor}% ${a.isResident ? '<span style="color:green;">(已入住)</span>' : ''}
+      <div style="display:flex; justify-scale:space-between; align-items:center;">
+      <div>
+      <b>${a.name}</b> <span style="color:#d69e2e;">[Lv.${lvl}]</span> 
+      <br><small style="color:#718096;">技能: ${spec.skillDesc}</small>
+      <br><small style="color:#4a5568;">当前工作: <b>${WORK_JOBS[a.assignedJob || 'none']}</b></small>
+      </div>
+      <div class="button-group">
+      <button onclick="feedAnimal('${k}')">🍎 喂食升级</button>
+      <button onclick="assignAnimalJob('${k}', 'kitchen')">派去厨房</button>
+      <button onclick="assignAnimalJob('${k}', 'classroom')">派去课堂</button>
+      <button onclick="assignAnimalJob('${k}', 'none')">休息</button>
+      </div>
+      </div>
       </div>`;
     }).join('');
   }
