@@ -247,3 +247,77 @@ function feedAnimal(animalKey) {
   addLog(`【伙伴培养】你喂给 ${animal.name} 2 颗野果，它的等级提升到了 Lv.${animal.level}！辅助能力增强了！`);
   updateActionTime(); updateUI(); saveGame();
 }
+
+// actions.js 拓展
+
+// 计算升级所需经验公式：Level * 100
+function getReqExp(level) {
+  return level * 100;
+}
+
+// 增加技能经验
+function addSkillExp(skillKey, amount) {
+  const skill = gameState.skills[skillKey];
+  const config = SKILL_TYPES[skillKey];
+  if (!skill || !config) return;
+
+  if (skill.level >= config.maxLevel) return; // 已达上限
+
+  skill.exp += amount;
+  let reqExp = getReqExp(skill.level);
+
+  // 支持连续升级
+  while (skill.exp >= reqExp && skill.level < config.maxLevel) {
+    skill.exp -= reqExp;
+    skill.level += 1;
+    gameState.skillPoints += 1; // 每次升级获得 1 技能点
+
+    addLog(`【技能提升】你的【${config.name}】等级提升到了 Lv.${skill.level}！获得了 1 点技能点。`);
+
+    // 战斗等级提升附加属性增益
+    if (skillKey === "combat") {
+      gameState.maxHp = (gameState.maxHp || 100) + 10;
+      gameState.attack = (gameState.attack || 10) + 2;
+    }
+
+    reqExp = getReqExp(skill.level);
+  }
+
+  updateUI();
+  saveGame();
+}
+
+// 学习/点亮天赋技能
+function unlockTalent(nodeId) {
+  const node = SKILL_TREE_NODES[nodeId];
+  if (!node) return;
+
+  // 1. 检查技能点
+  if (gameState.skillPoints < node.cost) {
+    addLog("技能点不足！");
+    return;
+  }
+  // 2. 检查等级要求
+  if (gameState.skills[node.reqSkill].level < node.reqLevel) {
+    addLog(`需要【${SKILL_TYPES[node.reqSkill].name}】达到 Lv.${node.reqLevel}`);
+    return;
+  }
+  // 3. 检查前置技能
+  if (node.parent && !gameState.unlockedTalents.includes(node.parent)) {
+    addLog(`需要先解锁前置天赋【${SKILL_TREE_NODES[node.parent].name}】`);
+    return;
+  }
+  // 4. 检查是否已解锁
+  if (gameState.unlockedTalents.includes(nodeId)) {
+    addLog("该天赋已解锁！");
+    return;
+  }
+
+  // 扣除点数并解锁
+  gameState.skillPoints -= node.cost;
+  gameState.unlockedTalents.push(nodeId);
+  addLog(`【天赋解锁】你学会了天赋【${node.name}】！`);
+
+  updateUI();
+  saveGame();
+}
