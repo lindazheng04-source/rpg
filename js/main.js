@@ -194,8 +194,59 @@ function animalVisitCheck() {
   });
 }
 
+// 随机轮换季节与天气
+function updateWeatherAndSeason() {
+  // 每次触发有 15% 概率切换天气
+  if (Math.random() < 0.15) {
+    const pool = SEASON_WEATHER_POOL[gameState.season] || SEASON_WEATHER_POOL.spring;
+    const newWeather = pool[Math.floor(Math.random() * pool.length)];
+    
+    if (newWeather !== gameState.weather) {
+      gameState.weather = newWeather;
+      const wInfo = WEATHERS[newWeather];
+      addLog(`【天气变化】森林里的天气转为了【${wInfo.name}】。`);
+    }
+
+    // 推进季节日子（每 20 次天气变幻推进 1 天）
+    gameState.seasonDay = (gameState.seasonDay || 1) + 1;
+    if (gameState.seasonDay > 5) { // 5 天换一个季节
+      gameState.seasonDay = 1;
+      const seasonKeys = ['spring', 'summer', 'autumn', 'winter'];
+      let nextIdx = (seasonKeys.indexOf(gameState.season) + 1) % seasonKeys.length;
+      gameState.season = seasonKeys[nextIdx];
+      addLog(`【季节更替】季节交替，迎来了【${SEASONS[gameState.season].name}】！`);
+    }
+  }
+}
+
+// 在 elfAutoGatherCheck 函数开头加入天气判定：
+function elfAutoGatherCheck() {
+  if (gameState.isExploring) return;
+
+  // 极端天气（台风/暴风雪）禁止出门
+  const currentWeather = WEATHERS[gameState.weather] || WEATHERS.sunny;
+  if (!currentWeather.canGather) {
+    if (Math.random() < 0.1) {
+      addLog(`【天气恶劣】外面正刮着【${currentWeather.name}】，小精灵乖乖待在家里不敢出门。`);
+    }
+    return;
+  }
+
+  // 计算季节与天气对体力消耗的叠加影响
+  const seasonCfg = SEASONS[gameState.season] || SEASONS.spring;
+  const baseStaminaCost = 15;
+  const actualCost = Math.floor(baseStaminaCost * seasonCfg.staminaCostRate * currentWeather.staminaMod);
+  
+  if (gameState.stamina < actualCost) return;
+
+  // ... 原有的 25% 概率触发远足逻辑
+  // 扣体力时使用计算好的实际消耗：
+  // gameState.stamina = Math.max(10, gameState.stamina - actualCost);
+}
+
 function gameLoop() {
   if (!gameState.isExploring) {
+    updateWeatherAndSeason(); // 天气/季节更新
     checkAutoEat();
     checkRestRecovery();
     elfAutoGatherCheck();
