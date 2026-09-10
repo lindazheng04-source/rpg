@@ -13,6 +13,7 @@ const DB = {
     }
   },
 
+
   // 加载数据 (自动合并默认值，防止修改代码新增字段后报错)
   load(defaultState) {
     try {
@@ -37,6 +38,32 @@ const DB = {
       return defaultState;
     }
   },
+
+  // 1. 补全技能列表（如果旧档没有 skills 字段，或缺少新新增的技能 key）
+    if (!gameState.skills) {
+      gameState.skills = {};
+    }
+    
+    // 确保 SKILL_TYPES 中定义的每个技能在 gameState 中都存在
+    Object.keys(SKILL_TYPES).forEach(key => {
+      if (!gameState.skills[key]) {
+        gameState.skills[key] = { level: 1, exp: 0 };
+      }
+    });
+
+    // 2. 补全技能点与已解锁天赋
+    if (typeof gameState.skillPoints !== "number") {
+      gameState.skillPoints = 0;
+    }
+
+    if (!Array.isArray(gameState.unlockedTalents)) {
+      gameState.unlockedTalents = [];
+    }
+
+    // 3. 补全道具背包对象（供洗点道具使用）
+    if (!gameState.items) {
+      gameState.items = {};
+    }
 
   // 清除/重置存档
   clear() {
