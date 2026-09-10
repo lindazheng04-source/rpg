@@ -58,3 +58,18 @@ function resetData() {
     location.reload();
   }
 }
+// state_2.js 底部追加
+function getHouseComfort() {
+  let baseComfort = houseUpgradeCosts[gameState.houseLevel]?.comfort || 5;
+  let roomsComfort = 0;
+  if (Array.isArray(gameState.rooms)) {
+    gameState.rooms.forEach(roomName => {
+      for (let key in roomNames) {
+        if (roomNames[key] === roomName) {
+          roomsComfort += roomCosts[key].comfort;
+        }
+      }
+    });
+  }
+  return baseComfort + roomsComfort;
+}
