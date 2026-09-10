@@ -94,11 +94,16 @@ function updateUI() {
   }
 
   //展示季节与天气
+  // ui_2.js updateUI() 函数中：
   const seasonCfg = SEASONS[gameState.season] || SEASONS.spring;
   const weatherCfg = WEATHERS[gameState.weather] || WEATHERS.sunny;
 
   if (document.getElementById('environment-info')) {
-    document.getElementById('environment-info').innerText = `${seasonCfg.name}第${gameState.seasonDay || 1}天 (${weatherCfg.name})`;
+    document.getElementById('environment-info').innerHTML = `
+    <b>${seasonCfg.name}</b> 第 ${gameState.seasonDay || 1} 天 
+    | <span style="color:#8c6b52; cursor:help;" title="${weatherCfg.desc}">${weatherCfg.name}</span>
+    ${!weatherCfg.canGather ? ' <span style="color:#e53e3e; font-size:0.8rem;">(恶劣天气禁止出行)</span>' : ''}
+    `;
   }
 
   // 基础食用/制作按钮
