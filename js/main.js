@@ -138,7 +138,7 @@ function elfAutoGatherCheck() {
       gameState.lastActionTime = Date.now();
       updateUI(); 
       saveGame();
-    }, 60000);
+    }, 6000);
   }
 }
 function animalVisitCheck() {
@@ -246,32 +246,6 @@ function updateWeatherAndSeason() {
   }
 }
 
-// 修改小精灵自动远足逻辑中的天气校验
-function elfAutoGatherCheck() {
-  if (gameState.isExploring) return;
-
-  const currentWeather = WEATHERS[gameState.weather] || WEATHERS.sunny;
-
-  // 如果天气不允许出门（如暴雨、台风、龙卷风、冰雹等）
-  if (!currentWeather.canGather) {
-    if (Math.random() < 0.08) {
-      addLog(`【预警】外面正值【${currentWeather.name}】，环境极其危险，小精灵躲在小屋里不便出门。`);
-    }
-    return;
-  }
-
-  // 动态计算该天气和季节下的体力消耗
-  const seasonCfg = SEASONS[gameState.season] || SEASONS.spring;
-  const baseStaminaCost = 15;
-  const actualCost = Math.floor(baseStaminaCost * seasonCfg.staminaCostRate * currentWeather.staminaMod);
-
-  if (gameState.stamina < actualCost) return;
-
-  // 触发远足
-  if (Math.random() < 0.25) {
-    // ... 触发远足并扣除 actualCost 体力
-  }
-}
 
 function gameLoop() {
   if (!gameState.isExploring) {
