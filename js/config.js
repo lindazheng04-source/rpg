@@ -117,6 +117,44 @@ const SEASON_WEATHER_POOLS = {
   winter: ['cloudy', 'overcast', 'lightSnow', 'moderateSnow', 'heavySnow', 'blizzard', 'sleet', 'freezingRain', 'graupel', 'ice', 'frost']
 };
 
+// 1. 生境地图与探索解封条件
+const BIOMES = {
+  land: { name: "🌳 陆地森林", unlockReq: { wood: 0 }, desc: "熟悉的大森林，陆生动物栖息于此。" },
+  aerial: { name: "☁️ 高空树冠", unlockReq: { wood: 80, grass: 100 }, vehicle: "🎈 热气球", desc: "穿过云雾的高空，飞禽与昆虫的家园。" },
+  freshwater: { name: "💧 溪流湿地", unlockReq: { wood: 60, stone: 40 }, vehicle: "🛶 独木舟", desc: "清澈的江河湖泊，两栖与淡水生物在此生活。" },
+  shallowMarine: { name: "🏖️ 浅海珊瑚礁", unlockReq: { wood: 100, stone: 80 }, vehicle: "⛵ 帆船", desc: "阳光穿透的浅海，阳光与珊瑚礁充满生机。" },
+  deepSea: { name: "🌊 深海无光区", unlockReq: { wood: 150, stone: 200 }, vehicle: "🤿 深潜木桶", desc: "超过千米的深海，栖息着神秘的深海巨物。" }
+};
+
+// 2. 庞大的动物全集与打工技能（支持脊椎与无脊椎动物）
+const ANIMAL_SPECIES = {
+  // 陆地
+  squirrel: { name: "🐿️ 小松鼠", biome: "land", workStation: "kitchen", skillDesc: "在厨房帮忙，烹饪成功率 +15%", expBonus: 0 },
+  rabbit: { name: "🐇 小白兔", biome: "land", workStation: "petcorner", skillDesc: "在游乐角玩耍，全家舒适度 +10 点", expBonus: 0 },
+  chameleon: { name: "🦎 变色龙", biome: "land", workStation: "bedroom", skillDesc: "巡逻休息区，小精灵休养回复速度 +20%", expBonus: 0 },
+  // 天空
+  sparrow: { name: "🐤 小麻雀", biome: "aerial", workStation: "classroom", skillDesc: "在课堂叽喳教学，经验收益 +20%", expBonus: 20 },
+  hummingbird: { name: "🐝 蜂鸟", biome: "aerial", workStation: "kitchen", skillDesc: "协助采蜜，甜食制作不消耗野果", expBonus: 0 },
+  // 淡水
+  poisonFrog: { name: "🐸 箭毒蛙", biome: "freshwater", workStation: "forge", skillDesc: "提炼毒素，草药膏炼制产量 +1", expBonus: 0 },
+  beaver: { name: "🦫 河狸", biome: "freshwater", workStation: "build", skillDesc: "协助建房，所有建造材料消耗 -10%", expBonus: 0 },
+  // 浅海
+  clownfish: { name: "🐠 小丑鱼", biome: "shallowMarine", workStation: "petcorner", skillDesc: "吸引海浪带回额外贝壳", expBonus: 0 },
+  seaTurtle: { name: "🐢 绿海龟", biome: "shallowMarine", workStation: "bedroom", skillDesc: "镇静安神，挂机离线收益 +15%", expBonus: 0 },
+  // 深海
+  anglerfish: { name: "🐟 鮟鱇鱼", biome: "deepSea", workStation: "classroom", skillDesc: "深海提灯照亮未知，探索搜集量 +25%", expBonus: 0 }
+};
+
+// 打工岗位定义
+const WORK_JOBS = {
+  none: "闲逛中",
+  kitchen: "🍳 厨房帮厨",
+  classroom: "📚 课堂巡逻",
+  bedroom: "🛌 睡房看护",
+  petcorner: "🎡 游乐角驻守",
+  forge: "⚒️ 锻造台协助"
+};
+
 const specialGifts = [
   { name: "闪亮的松果", type: "collectible" },
   { name: "五彩羽毛", type: "collectible" },
