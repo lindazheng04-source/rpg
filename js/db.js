@@ -23,13 +23,13 @@ const DB = {
 
       // 深层或表层合并：确保旧存档中缺失的新字段能自动使用 defaultState 的默认值
       // db.js 中的 load 方法修改
-const mergedState = {
-  ...defaultState,
-  ...parsed,
-  foods: { ...defaultState.foods, ...(parsed.foods || {}) },
-  recipeExp: { ...defaultState.recipeExp, ...(parsed.recipeExp || {}) },
-  animals: { ...defaultState.animals, ...(parsed.animals || {}) }
-};
+      const mergedState = {
+        ...defaultState,
+        ...parsed,
+        foods: { ...defaultState.foods, ...(parsed.foods || {}) },
+        recipeExp: { ...defaultState.recipeExp, ...(parsed.recipeExp || {}) },
+        animals: { ...defaultState.animals, ...(parsed.animals || {}) }
+      };
 
       return mergedState;
     } catch (e) {
