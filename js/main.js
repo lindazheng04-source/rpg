@@ -246,6 +246,22 @@ function updateWeatherAndSeason() {
   }
 }
 
+// main.js 或 actions.js 中的挂机结算逻辑
+function performGathering(type) {
+  if (type === "mining") {
+    let baseYield = 2;
+    
+    // 天赋加成判定
+    if (gameState.unlockedTalents.includes("mine_efficient")) {
+      baseYield = Math.floor(baseYield * 1.15);
+    }
+    
+    gameState.ore = (gameState.ore || 0) + baseYield;
+    
+    // 增加采矿经验
+    addSkillExp("mining", 15);
+  }
+}
 
 function gameLoop() {
   if (!gameState.isExploring) {
