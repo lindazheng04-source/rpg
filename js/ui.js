@@ -182,6 +182,7 @@ if (biomeContainer) {
       upgradeBtn.disabled = true;
     }
   }
+  renderSkillPanel();
 }
 
 // ui.js 拓展
