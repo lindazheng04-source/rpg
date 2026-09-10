@@ -29,7 +29,14 @@ function cookFood(recipeId) {
     addLog("还没有厨房，无法烹饪。请先建造厨房！");
     return;
   }
+// 在 cookFood 函数内部算成功率时加上打工 Bonus：
+let jobBonus = 0;
+if (gameState.animals.squirrel && gameState.animals.squirrel.assignedJob === 'kitchen') {
+  const level = gameState.animals.squirrel.level || 1;
+  jobBonus = 0.15 + (level * 0.02); // 基础 +15%，每级再加 2%
+}
 
+const successRate = recipe.baseSuccess + (currentExp / 100) * (1 - recipe.baseSuccess) + jobBonus;
   // 检查物资
   if (gameState.fruit < recipe.cost.fruit || gameState.meat < recipe.cost.meat) {
     addLog(`烹饪【${recipe.name}】的食材不足！`);
