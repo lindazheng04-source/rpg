@@ -45,6 +45,10 @@ const initialGameState = {
   lastTime: Date.now()
   
 };
+
+gameState.skillPoints = 0;          // 可用技能点
+gameState.unlockedTalents = [];     // 已解锁的技能树节点 ID 列表
+
 // 当前运行中的状态
 let gameState = { ...initialGameState };
 
