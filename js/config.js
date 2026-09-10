@@ -162,6 +162,47 @@ const specialGifts = [
   { name: "光滑的鹅卵石", type: "collectible" }
 ];
 
+// config.js 拓展
+const SKILL_TYPES = {
+  mining: { name: "采矿", maxLevel: 50 },
+  logging: { name: "伐木", maxLevel: 50 },
+  crafting: { name: "锻造/裁缝", maxLevel: 50 },
+  combat: { name: "战斗", maxLevel: 50 }
+};
+
+// 技能树节点配置
+const SKILL_TREE_NODES = {
+  // 采矿专精路线
+  mine_efficient: {
+    id: "mine_efficient",
+    name: "高效采掘",
+    desc: "挂机采矿产出效率 +15%",
+    reqSkill: "mining",
+    reqLevel: 5,
+    cost: 1,
+    parent: null
+  },
+  mine_gem_expert: {
+    id: "mine_gem_expert",
+    name: "宝石专家",
+    desc: "采矿时有 5% 概率获得稀有宝石",
+    reqSkill: "mining",
+    reqLevel: 15,
+    cost: 2,
+    parent: "mine_efficient"
+  },
+  // 战斗专精路线
+  combat_mastery: {
+    id: "combat_mastery",
+    name: "战斗专精",
+    desc: "基础生命值 +50，攻击力 +10",
+    reqSkill: "combat",
+    reqLevel: 5,
+    cost: 1,
+    parent: null
+  }
+};
+
 const STAMINA_WARNING_THRESHOLD = 50;
 const STAMINA_EXHAUSTED_THRESHOLD = 20;
 const REST_STAMINA_RECOVERY_INTERVAL = 30;
