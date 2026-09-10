@@ -177,3 +177,66 @@ function buildRoom(type) {
     addLog("建造物资不足。");
   }
 }
+
+// 1. 前往/解锁新生境
+function travelToBiome(biomeKey) {
+  const target = BIOMES[biomeKey];
+  if (!target) return;
+
+  if (!gameState.unlockedBiomes.includes(biomeKey)) {
+    // 校验解锁资源
+    const req = target.unlockReq;
+    if (gameState.wood < (req.wood || 0) || gameState.stone < (req.stone || 0) || gameState.grass < (req.grass || 0)) {
+      addLog(`远航去【${target.name}】的载具物资不足！需要: ${req.wood||0}木 ${req.stone||0}石 ${req.grass||0}草`);
+      return;
+    }
+    gameState.wood -= (req.wood || 0);
+    gameState.stone -= (req.stone || 0);
+    gameState.grass -= (req.grass || 0);
+    gameState.unlockedBiomes.push(biomeKey);
+    addLog(`【远航成功】你建造了 ${target.vehicle}，成功开启了新地图【${target.name}】！`);
+  }
+
+  gameState.currentBiome = biomeKey;
+  addLog(`【迁徙】小精灵来到了【${target.name}】。`);
+  updateActionTime(); updateUI(); saveGame();
+}
+
+// 2. 分配动物打工
+function assignAnimalJob(animalKey, jobKey) {
+  const animal = gameState.animals[animalKey];
+  if (!animal || !animal.isResident) {
+    addLog("只有已入住的动物朋友才能安排工作哦！");
+    return;
+  }
+
+  // 检查对应的房间是否已建造
+  if (jobKey !== 'none') {
+    const jobRoomName = roomNames[jobKey];
+    if (jobRoomName && !gameState.rooms.includes(jobRoomName)) {
+      addLog(`家里的【${jobRoomName}】尚未建造，无法安排工作！`);
+      return;
+    }
+  }
+
+  animal.assignedJob = jobKey;
+  const jobName = WORK_JOBS[jobKey] || "闲逛";
+  addLog(`【工作安排】你安排 ${animal.name} 去了【${jobName}】！`);
+  updateActionTime(); updateUI(); saveGame();
+}
+
+// 3. 喂食提升动物等级（培养与技能强化）
+function feedAnimal(animalKey) {
+  const animal = gameState.animals[animalKey];
+  if (!animal || !animal.isResident) return;
+
+  if (gameState.fruit < 2) {
+    addLog("喂食伙伴需要 2 颗野果！");
+    return;
+  }
+
+  gameState.fruit -= 2;
+  animal.level = (animal.level || 1) + 1;
+  addLog(`【伙伴培养】你喂给 ${animal.name} 2 颗野果，它的等级提升到了 Lv.${animal.level}！辅助能力增强了！`);
+  updateActionTime(); updateUI(); saveGame();
+}
