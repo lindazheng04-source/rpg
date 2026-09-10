@@ -93,6 +93,14 @@ function updateUI() {
     }
   }
 
+  //展示季节与天气
+  const seasonCfg = SEASONS[gameState.season] || SEASONS.spring;
+  const weatherCfg = WEATHERS[gameState.weather] || WEATHERS.sunny;
+
+  if (document.getElementById('environment-info')) {
+    document.getElementById('environment-info').innerText = `${seasonCfg.name}第${gameState.seasonDay || 1}天 (${weatherCfg.name})`;
+  }
+
   // 基础食用/制作按钮
   if (document.getElementById('btn-eat-fruit')) document.getElementById('btn-eat-fruit').disabled = gameState.fruit < 1;
   if (document.getElementById('btn-eat-meat')) document.getElementById('btn-eat-meat').disabled = gameState.meat < 1;
