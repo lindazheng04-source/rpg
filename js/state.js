@@ -30,6 +30,9 @@ const initialGameState = {
     bird: { name: "小麻雀", favor: 0, isResident: false },
     rabbit: { name: "小白兔", favor: 0, isResident: false }
   },
+  season: 'spring',
+  weather: 'sunny',
+  seasonDay: 1, // 当前季节第几天（每5天切换一个季节）
   lastTime: Date.now()
 };
 // 当前运行中的状态
@@ -43,13 +46,17 @@ function loadGame() {
   const isHasSave = !!localStorage.getItem('elf_game_v2');
   gameState = DB.load(initialGameState);
   
-  if (typeof addLog === 'function') {
-    if (isHasSave) {
-      addLog("欢迎回来，小精灵正在家里等着你呢。");
-    } else {
-      addLog("四岁的小精灵在森林里醒来，独自一人。你需要帮他建造家园。");
-    }
+  const now = Date.now();
+  const offlineSeconds = Math.floor((now - (gameState.lastTime || now)) / 1000);
+  
+  if (isHasSave) {
+    addLog("欢迎回来，小精灵正在家里等着你呢。");
+    calculateOfflineProgress(offlineSeconds); // 结算挂机收益
+  } else {
+    addLog("四岁的小精灵在森林里醒来，独自一人。你需要帮他建造家园。");
   }
+  
+  gameState.lastTime = now;
 }
 
 function resetData() {
@@ -58,7 +65,7 @@ function resetData() {
     location.reload();
   }
 }
-// state_2.js 底部追加
+
 function getHouseComfort() {
   let baseComfort = houseUpgradeCosts[gameState.houseLevel]?.comfort || 5;
   let roomsComfort = 0;
@@ -72,4 +79,46 @@ function getHouseComfort() {
     });
   }
   return baseComfort + roomsComfort;
+}
+// 结算离线挂机收益
+function calculateOfflineProgress(offlineSeconds) {
+  if (offlineSeconds < 60) return; // 小于1分钟忽略
+
+  // 离线时间上限设为 12 小时 (43200 秒)，防止数值暴涨
+  const effectiveSeconds = Math.min(offlineSeconds, 43200);
+  const hours = (effectiveSeconds / 3600).toFixed(1);
+
+  // 每 5 分钟（300秒）算一次挂机产出周期
+  const cycles = Math.floor(effectiveSeconds / 300);
+  if (cycles <= 0) return;
+
+  const currentBag = backpackSpecs[gameState.backpack || 'none'] || backpackSpecs['none'];
+  const maxCap = currentBag.capacity;
+
+  // 根据当前季节调整挂机产出
+  const seasonCfg = SEASONS[gameState.season] || SEASONS.spring;
+  const rate = seasonCfg.gatherRate;
+
+  let totalWood = Math.floor(cycles * (maxCap * 0.2) * rate);
+  let totalGrass = Math.floor(cycles * (maxCap * 0.2) * rate);
+  let totalStone = Math.floor(cycles * (maxCap * 0.1) * rate);
+  let totalFruit = Math.floor(cycles * 0.8 * rate);
+
+  gameState.wood += totalWood;
+  gameState.grass += totalGrass;
+  gameState.stone += totalStone;
+  gameState.fruit += totalFruit;
+
+  // 住在家里的动物帮忙产出
+  let animalLog = "";
+  if (gameState.animals) {
+    let residentCount = Object.values(gameState.animals).filter(a => a.isResident).length;
+    if (residentCount > 0) {
+      let extraWood = cycles * residentCount * 2;
+      gameState.wood += extraWood;
+      animalLog = `，居住的动物伙伴额外收集了 ${extraWood} 树枝`;
+    }
+  }
+
+  addLog(`【离线挂机收益】离线 ${hours} 小时，小精灵和你一共收获了：${totalWood}木 ${totalGrass}草 ${totalStone}石 ${totalFruit}野果${animalLog}！`);
 }
