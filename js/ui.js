@@ -94,9 +94,6 @@ function updateUI() {
   }
 
   //展示季节与天气
-  // ui_2.js updateUI() 函数中：
-  const seasonCfg = SEASONS[gameState.season] || SEASONS.spring;
-  const weatherCfg = WEATHERS[gameState.weather] || WEATHERS.sunny;
 
   if (document.getElementById('environment-info')) {
     document.getElementById('environment-info').innerHTML = `
