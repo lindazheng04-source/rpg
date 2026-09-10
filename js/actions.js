@@ -20,7 +20,7 @@ function eatMeat() {
   updateActionTime(); updateUI(); saveGame();
 }
 
-// 统一烹饪食物处理函数（使用单独食物的熟练度计算成功率）
+// 建议在 actions.js 的 cookFood 中修改为：
 function cookFood(recipeId) {
   const recipe = foodRecipes[recipeId];
   if (!recipe) return;
@@ -29,27 +29,27 @@ function cookFood(recipeId) {
     addLog("还没有厨房，无法烹饪。请先建造厨房！");
     return;
   }
-// 在 cookFood 函数内部算成功率时加上打工 Bonus：
-let jobBonus = 0;
-if (gameState.animals.squirrel && gameState.animals.squirrel.assignedJob === 'kitchen') {
-  const level = gameState.animals.squirrel.level || 1;
-  jobBonus = 0.15 + (level * 0.02); // 基础 +15%，每级再加 2%
-}
 
-const successRate = recipe.baseSuccess + (currentExp / 100) * (1 - recipe.baseSuccess) + jobBonus;
-  // 检查物资
+  // 检查食材
   if (gameState.fruit < recipe.cost.fruit || gameState.meat < recipe.cost.meat) {
     addLog(`烹饪【${recipe.name}】的食材不足！`);
     return;
+  }
+
+  // 计算打工加成
+  let jobBonus = 0;
+  if (gameState.animals.squirrel && gameState.animals.squirrel.assignedJob === 'kitchen') {
+    const level = gameState.animals.squirrel.level || 1;
+    jobBonus = 0.15 + (level * 0.02);
   }
 
   // 扣除物资
   gameState.fruit -= recipe.cost.fruit;
   gameState.meat -= recipe.cost.meat;
 
-  // 根据当前食物独立的熟练度算成功率
+  // 统一计算成功率
   const currentExp = gameState.recipeExp[recipeId] || 0;
-  const successRate = recipe.baseSuccess + (currentExp / 100) * (1 - recipe.baseSuccess);
+  const successRate = recipe.baseSuccess + (currentExp / 100) * (1 - recipe.baseSuccess) + jobBonus;
 
   if (Math.random() < successRate) {
     gameState.foods[recipeId] = (gameState.foods[recipeId] || 0) + 1;
@@ -58,6 +58,12 @@ const successRate = recipe.baseSuccess + (currentExp / 100) * (1 - recipe.baseSu
     addLog(`【烹饪失败】不小心把【${recipe.name}】给做糊了...但熟练度提升了！`);
   }
 
+  if (currentExp < 100) {
+    gameState.recipeExp[recipeId] = Math.min(100, currentExp + 8);
+  }
+
+  updateActionTime(); updateUI(); saveGame();
+}
   // 提升该食物专属的烹饪熟练度
   if (currentExp < 100) {
     gameState.recipeExp[recipeId] = Math.min(100, currentExp + 8);
