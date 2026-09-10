@@ -183,3 +183,49 @@ if (biomeContainer) {
     }
   }
 }
+
+// ui.js 拓展
+function renderSkillPanel() {
+  const container = document.getElementById("skill-panel");
+  if (!container) return;
+
+  let html = `<div><b>可用技能点：</b> ${gameState.skillPoints}</div><hr/>`;
+
+  // 1. 渲染四大基础技能等级
+  html += `<div class="skill-list">`;
+  Object.keys(SKILL_TYPES).forEach(key => {
+    const skill = gameState.skills[key];
+    const config = SKILL_TYPES[key];
+    const reqExp = getReqExp(skill.level);
+    html += `
+      <div class="skill-node">
+        <span><b>${config.name}</b> (Lv.${skill.level})</span>
+        <progress value="${skill.exp}" max="${reqExp}"></progress>
+        <span>${skill.exp}/${reqExp}</span>
+      </div>
+    `;
+  });
+  html += `</div><hr/>`;
+
+  // 2. 渲染天赋技能树
+  html += `<div class="talent-tree"><b>专精天赋树</b><br/>`;
+  Object.keys(SKILL_TREE_NODES).forEach(nodeId => {
+    const node = SKILL_TREE_NODES[nodeId];
+    const isUnlocked = gameState.unlockedTalents.includes(nodeId);
+
+    html += `
+      <div class="talent-card ${isUnlocked ? 'unlocked' : ''}">
+        <div><b>${node.name}</b> (${SKILL_TYPES[node.reqSkill].name} Lv.${node.reqLevel})</div>
+        <div>${node.desc}</div>
+        ${
+          isUnlocked
+            ? `<span style="color:green;">[已激活]</span>`
+            : `<button onclick="unlockTalent('${nodeId}')">解锁 (${node.cost} 点)</button>`
+        }
+      </div>
+    `;
+  });
+  html += `</div>`;
+
+  container.innerHTML = html;
+}
