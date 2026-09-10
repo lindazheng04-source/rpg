@@ -47,13 +47,26 @@ function checkRestRecovery() {
 }
 
 function elfAutoGatherCheck() {
-  // 如果已经在远足中，直接跳过
   if (gameState.isExploring) return;
 
-  // 体力不足 30 时无法出门
-  if (gameState.stamina < 30) return;
+  const currentWeather = WEATHERS[gameState.weather] || WEATHERS.sunny;
 
-  // 25% 概率决定是否触发远足
+  // 1. 恶劣天气判定
+  if (!currentWeather.canGather) {
+    if (Math.random() < 0.08) {
+      addLog(`【预警】外面正值【${currentWeather.name}】，环境极其危险，小精灵躲在小屋里不便出门。`);
+    }
+    return;
+  }
+
+  // 2. 动态计算天气和季节下的体力消耗
+  const seasonCfg = SEASONS[gameState.season] || SEASONS.spring;
+  const baseStaminaCost = 15;
+  const actualCost = Math.floor(baseStaminaCost * seasonCfg.staminaCostRate * currentWeather.staminaMod);
+
+  if (gameState.stamina < actualCost) return;
+
+  // 3. 25% 概率决定是否触发远足
   if (Math.random() < 0.25) {
     gameState.isExploring = true;
 
@@ -62,11 +75,8 @@ function elfAutoGatherCheck() {
 
     let takeLog = "";
     let hasWeapon = false;
-    
-    // 安全检查 foods 结构
     const foods = gameState.foods || {};
 
-    // 携带食物带出门（加防空安全链）
     if ((foods.meatStew || 0) > 0) {
       gameState.foods.meatStew -= 1;
       takeLog = "，带上了森林杂烩汤干粮";
@@ -89,7 +99,7 @@ function elfAutoGatherCheck() {
     addLog(`【自主远足】小精灵背上【${currentBag.name}】出发了${takeLog}...`);
     updateUI();
 
-    // 6秒后远足归来
+    // 6秒后归来
     setTimeout(() => {
       gameState.isExploring = false;
 
@@ -101,7 +111,6 @@ function elfAutoGatherCheck() {
 
       let totalWeight = rawWood + rawGrass + rawStone + rawFruit + rawMeat;
 
-      // 负重超限截断计算
       if (totalWeight > maxCapacity && totalWeight > 0) {
         const ratio = maxCapacity / totalWeight;
         rawWood = Math.floor(rawWood * ratio);
@@ -117,7 +126,8 @@ function elfAutoGatherCheck() {
       gameState.fruit += rawFruit;
       gameState.meat += rawMeat;
 
-      gameState.stamina = Math.max(10, gameState.stamina - 15);
+      // 扣除计算好的实际体力消耗
+      gameState.stamina = Math.max(0, gameState.stamina - actualCost);
 
       let totalGathered = rawWood + rawGrass + rawStone + rawFruit + rawMeat;
       let resultText = `${rawWood}木 ${rawGrass}草 ${rawStone}石 ${rawFruit}果`;
@@ -128,7 +138,7 @@ function elfAutoGatherCheck() {
       gameState.lastActionTime = Date.now();
       updateUI(); 
       saveGame();
-    }, 6000);
+    }, 60000);
   }
 }
 
