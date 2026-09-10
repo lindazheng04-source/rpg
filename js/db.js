@@ -22,12 +22,14 @@ const DB = {
       const parsed = JSON.parse(saved);
 
       // 深层或表层合并：确保旧存档中缺失的新字段能自动使用 defaultState 的默认值
-      const mergedState = {
-        ...defaultState,
-        ...parsed,
-        // 针对对象类型的嵌套数据进行合并保护
-        animals: { ...defaultState.animals, ...(parsed.animals || {}) }
-      };
+      // db.js 中的 load 方法修改
+const mergedState = {
+  ...defaultState,
+  ...parsed,
+  foods: { ...defaultState.foods, ...(parsed.foods || {}) },
+  recipeExp: { ...defaultState.recipeExp, ...(parsed.recipeExp || {}) },
+  animals: { ...defaultState.animals, ...(parsed.animals || {}) }
+};
 
       return mergedState;
     } catch (e) {
