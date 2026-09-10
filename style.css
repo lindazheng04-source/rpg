@@ -95,6 +95,50 @@ h3 {
   margin-bottom: 5px;
 }
 
+.skill-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 10px 0;
+}
+
+.skill-node {
+  background: #ffffff;
+  border: 1px solid #eee1d0;
+  padding: 10px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.skill-node progress {
+  width: 100%;
+  height: 8px;
+  accent-color: #e2b887;
+}
+
+/* 天赋树网格 */
+.talent-tree {
+  margin-top: 12px;
+}
+
+.talent-card {
+  background: #ffffff;
+  border: 1px solid #e2d2be;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.talent-card.unlocked {
+  background: #f0f9ff;
+  border-color: #bae6fd;
+}
+
 /* 工坊与独立模块 */
 .workbench-block {
   background: #faf6f0;
