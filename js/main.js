@@ -141,18 +141,23 @@ function elfAutoGatherCheck() {
     }, 60000);
   }
 }
-
 function animalVisitCheck() {
   if (!gameState.animals) return;
-  const keys = Object.keys(gameState.animals);
-  if (keys.length === 0) return;
 
-  const key = keys[Math.floor(Math.random() * keys.length)];
+  // 筛选出属于当前地图生境的动物
+  const validKeys = Object.keys(gameState.animals).filter(k => {
+    const spec = ANIMAL_SPECIES[k];
+    return spec && spec.biome === (gameState.currentBiome || 'land');
+  });
+
+  if (validKeys.length === 0) return;
+
+  const key = validKeys[Math.floor(Math.random() * validKeys.length)];
   const animal = gameState.animals[key];
   if (!animal) return;
 
   const comfort = typeof getHouseComfort === 'function' ? getHouseComfort() : 5;
-  const visitChance = Math.min(0.25, 0.03 + (comfort / 10) * 0.012);
+  const visitChance = Math.min(0.35, 0.05 + (comfort / 10) * 0.015);
 
   if (Math.random() < visitChance) {
     if (!animal.isResident) {
@@ -185,11 +190,11 @@ function animalVisitCheck() {
         }
       }
 
-      addLog(`【来访】${animal.name} 来家里串门了${dropLog} (好感度 +${favorGain}%)。`);
+      addLog(`【生境来访】在${BIOMES[gameState.currentBiome].name}，${animal.name} 靠近了你的小屋 (好感度 +${favorGain}%)。`);
 
       if (animal.favor >= 100) {
         animal.isResident = true;
-        addLog(`【新家人】${animal.name} 决定搬过来和小精灵一起生活了！`);
+        addLog(`【新家人】${animal.name} 被你的家园吸引，决定正式入住！`);
       }
     }
   }
