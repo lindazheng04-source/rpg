@@ -321,3 +321,49 @@ function unlockTalent(nodeId) {
   updateUI();
   saveGame();
 }
+
+// actions.js 拓展
+
+/**
+ * 重置/洗点功能
+ * @param {string} itemKey - 洗点消耗的道具ID，例如 'respec_potion' (洗点水)
+ */
+function resetTalents(itemKey = 'respec_potion') {
+  // 1. 检查是否有已解锁的天赋
+  if (!gameState.unlockedTalents || gameState.unlockedTalents.length === 0) {
+    addLog("你当前未学习任何天赋，无需洗点。");
+    return;
+  }
+
+  // 2. 检查洗点道具
+  const itemCount = gameState.items ? (gameState.items[itemKey] || 0) : 0;
+  if (itemCount < 1) {
+    addLog("洗点失败：你没有【遗忘药水】！");
+    return;
+  }
+
+  // 3. 计算需要返还的总技能点，并扣除特质属性
+  let refundedPoints = 0;
+  gameState.unlockedTalents.forEach(nodeId => {
+    const node = SKILL_TREE_NODES[nodeId];
+    if (node) {
+      refundedPoints += (node.cost || 1);
+
+      // 特殊情况：若天赋增加过面板基础属性，需在此处扣除
+      if (nodeId === "combat_mastery") {
+        gameState.maxHp = Math.max(100, (gameState.maxHp || 100) - 50);
+        gameState.attack = Math.max(10, (gameState.attack || 10) - 10);
+      }
+    }
+  });
+
+  // 4. 执行扣道具与重置数据
+  gameState.items[itemKey] -= 1;
+  gameState.skillPoints = (gameState.skillPoints || 0) + refundedPoints;
+  gameState.unlockedTalents = []; // 清空已解锁列表
+
+  addLog(`【洗点成功】消耗了 1 个【遗忘药水】，已重置所有天赋并返还 ${refundedPoints} 点技能点！`);
+
+  updateUI();
+  saveGame();
+}
