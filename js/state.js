@@ -34,11 +34,12 @@ const initialGameState = {
     poisonFrog: { name: "箭毒蛙", favor: 0, level: 1, isResident: false, assignedJob: 'none', biome: 'freshwater' },
     anglerfish: { name: "鮟鱇鱼", favor: 0, level: 1, isResident: false, assignedJob: 'none', biome: 'deepSea' }
   },
-  gameState.skills = {
-  mining: { level: 1, exp: 0 },
-  logging: { level: 1, exp: 0 },
-  crafting: { level: 1, exp: 0 },
-  combat: { level: 1, exp: 0 },
+  skills:{
+    mining: { level: 1, exp: 0 },
+    logging: { level: 1, exp: 0 },
+    crafting: { level: 1, exp: 0 },
+    combat: { level: 1, exp: 0 }
+  },
   season: 'spring',
   weather: 'sunny',
   seasonDay: 1, // 当前季节第几天（每5天切换一个季节）
