@@ -25,10 +25,14 @@ const initialGameState = {
     roastedMeat: 0,
     meatStew: 0
   },
+  currentBiome: 'land',         // 当前所在生境
+  unlockedBiomes: ['land'],     // 已解锁的生境
   animals: {
-    squirrel: { name: "小松鼠", favor: 0, isResident: false },
-    bird: { name: "小麻雀", favor: 0, isResident: false },
-    rabbit: { name: "小白兔", favor: 0, isResident: false }
+    squirrel: { name: "小松鼠", favor: 0, level: 1, isResident: false, assignedJob: 'none', biome: 'land' },
+    sparrow: { name: "小麻雀", favor: 0, level: 1, isResident: false, assignedJob: 'none', biome: 'aerial' },
+    rabbit: { name: "小白兔", favor: 0, level: 1, isResident: false, assignedJob: 'none', biome: 'land' },
+    poisonFrog: { name: "箭毒蛙", favor: 0, level: 1, isResident: false, assignedJob: 'none', biome: 'freshwater' },
+    anglerfish: { name: "鮟鱇鱼", favor: 0, level: 1, isResident: false, assignedJob: 'none', biome: 'deepSea' }
   },
   season: 'spring',
   weather: 'sunny',
