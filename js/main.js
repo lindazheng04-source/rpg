@@ -199,7 +199,7 @@ function animalVisitCheck() {
     }
   }
 
-  keys.forEach(k => {
+  Object.keys(gameState.animals).forEach(k => {
     const a = gameState.animals[k];
     if (a && a.isResident && Math.random() < 0.08) {
       gameState.wood += 2;
