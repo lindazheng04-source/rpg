@@ -20,7 +20,7 @@ function eatMeat() {
   updateActionTime(); updateUI(); saveGame();
 }
 
-// 建议在 actions.js 的 cookFood 中修改为：
+// 修复后的 cookFood 函数
 function cookFood(recipeId) {
   const recipe = foodRecipes[recipeId];
   if (!recipe) return;
@@ -58,13 +58,7 @@ function cookFood(recipeId) {
     addLog(`【烹饪失败】不小心把【${recipe.name}】给做糊了...但熟练度提升了！`);
   }
 
-  if (currentExp < 100) {
-    gameState.recipeExp[recipeId] = Math.min(100, currentExp + 8);
-  }
-
-  updateActionTime(); updateUI(); saveGame();
-}
-  // 提升该食物专属的烹饪熟练度
+  // 提升熟练度
   if (currentExp < 100) {
     gameState.recipeExp[recipeId] = Math.min(100, currentExp + 8);
   }
