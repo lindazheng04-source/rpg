@@ -5,11 +5,9 @@ const initialGameState = {
   stone: 0,
   fruit: 5,
   meat: 0,
-  cooked: 0,
   medicine: 0,
   weapon: 0,
   stamina: 100,
-  cookExp: 0,
   houseLevel: 1,
   backpack: "none",
   specialItems: [],
@@ -17,6 +15,16 @@ const initialGameState = {
   autoEat: true,
   lastActionTime: Date.now(),
   rooms: [],
+  foods: {             // 补上熟食库存
+    fruitMashing: 0,
+    roastedMeat: 0,
+    meatStew: 0
+  },
+  recipeExp: {          // 补上单独烹饪熟练度
+    fruitMashing: 0,
+    roastedMeat: 0,
+    meatStew: 0
+  },
   animals: {
     squirrel: { name: "小松鼠", favor: 0, isResident: false },
     bird: { name: "小麻雀", favor: 0, isResident: false },
@@ -24,7 +32,6 @@ const initialGameState = {
   },
   lastTime: Date.now()
 };
-
 // 当前运行中的状态
 let gameState = { ...initialGameState };
 
